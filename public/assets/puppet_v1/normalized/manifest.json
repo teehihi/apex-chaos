@@ -1,0 +1,14 @@
+{
+  "puppetMainStatic": "assets/puppet_v1/normalized/puppet_main_static.png",
+  "strawMonsterStatic": "assets/puppet_v1/normalized/straw_monster_static.png",
+  "puppetDissolve16": "assets/puppet_v1/normalized/puppet_dissolve_16.png",
+  "puppetRageStatic": "assets/puppet_v1/normalized/puppet_rage_static.png",
+  "strawMonsterAttack16": "assets/puppet_v1/normalized/straw_monster_attack_16.png",
+  "effigyWall4": "assets/puppet_v1/normalized/effigy_wall_4.png",
+  "transferLink16": "assets/puppet_v1/normalized/transfer_link_16.png",
+  "finalCardLaunch16": null,
+  "finalCardValues": null,
+  "fallbacks": {
+    "puppetCard": "procedural gold-purple cursed card"
+  }
+}

@@ -1,0 +1,1106 @@
+{
+  "generatedAt": "2026-06-18T03:36:25.036Z",
+  "loadingAssets": {
+    "bgPortrait": "/assets/loading/loading-bg-portrait.png",
+    "bgLandscape": "/assets/loading/loading-bg-landscape.png",
+    "gameTitle": "/assets/loading/apex-chaos-title.png",
+    "loadingBarFrame": "/assets/loading/loading-bar-frame.png"
+  },
+  "assets": [
+    {
+      "path": "/apexEngine.js",
+      "type": "script",
+      "bytes": 1085795
+    },
+    {
+      "path": "/assets/arcade_v1/normalized/battle_idle_reference.png",
+      "type": "image",
+      "bytes": 1790311
+    },
+    {
+      "path": "/assets/arcade_v1/normalized/defeat_revive_victory_16.png",
+      "type": "image",
+      "bytes": 1886241
+    },
+    {
+      "path": "/assets/arcade_v1/normalized/idle_move_16.png",
+      "type": "image",
+      "bytes": 2028810
+    },
+    {
+      "path": "/assets/arcade_v1/normalized/manifest.json",
+      "type": "data",
+      "bytes": 1147
+    },
+    {
+      "path": "/assets/arcade_v1/normalized/optional_hit_16.png",
+      "type": "image",
+      "bytes": 2061001
+    },
+    {
+      "path": "/assets/arcade_v1/normalized/prop_vfx_sheet.png",
+      "type": "image",
+      "bytes": 1545780
+    },
+    {
+      "path": "/assets/arcade_v1/normalized/rage_jackpot_32.png",
+      "type": "image",
+      "bytes": 2365846
+    },
+    {
+      "path": "/assets/arcade_v1/normalized/text_multiplier_sheet.png",
+      "type": "image",
+      "bytes": 1939136
+    },
+    {
+      "path": "/assets/audio/menu_bgm.mp3",
+      "type": "audio",
+      "bytes": 3186752
+    },
+    {
+      "path": "/assets/blade_v1/normalized/bladeCastNormal16.png",
+      "type": "image",
+      "bytes": 1676423
+    },
+    {
+      "path": "/assets/blade_v1/normalized/bladeCastRage16.png",
+      "type": "image",
+      "bytes": 1355375
+    },
+    {
+      "path": "/assets/blade_v1/normalized/bladeMainNormal.png",
+      "type": "image",
+      "bytes": 1217902
+    },
+    {
+      "path": "/assets/blade_v1/normalized/bladeMainRage.png",
+      "type": "image",
+      "bytes": 1167496
+    },
+    {
+      "path": "/assets/blade_v1/normalized/bladeWaveNormal16.png",
+      "type": "image",
+      "bytes": 366051
+    },
+    {
+      "path": "/assets/blade_v1/normalized/bladeWaveRage16.png",
+      "type": "image",
+      "bytes": 1192078
+    },
+    {
+      "path": "/assets/blade_v1/normalized/bladeWeakText.png",
+      "type": "image",
+      "bytes": 1006283
+    },
+    {
+      "path": "/assets/blade_v1/normalized/bladeWeakX16.png",
+      "type": "image",
+      "bytes": 1018045
+    },
+    {
+      "path": "/assets/blade_v1/normalized/manifest.json",
+      "type": "data",
+      "bytes": 9295
+    },
+    {
+      "path": "/assets/engineer_v1/%C4%91%E1%BA%BF%20chung%20cho%20c%E1%BA%A3%20turret%20v%C3%A0%20rocket.png",
+      "type": "image",
+      "bytes": 1492116
+    },
+    {
+      "path": "/assets/engineer_v1/%C4%91%E1%BA%BF%20war%20machine.png",
+      "type": "image",
+      "bytes": 1848776
+    },
+    {
+      "path": "/assets/engineer_v1/04ed9a99-f6e8-48d6-84d1-9bb40950ed81.png",
+      "type": "image",
+      "bytes": 473832
+    },
+    {
+      "path": "/assets/engineer_v1/ada66438-125e-46d9-b5d0-33c9ff21226c.png",
+      "type": "image",
+      "bytes": 1165683
+    },
+    {
+      "path": "/assets/engineer_v1/Component%201.png",
+      "type": "image",
+      "bytes": 947567
+    },
+    {
+      "path": "/assets/engineer_v1/Component%202.png",
+      "type": "image",
+      "bytes": 955322
+    },
+    {
+      "path": "/assets/engineer_v1/Component%203.png",
+      "type": "image",
+      "bytes": 770299
+    },
+    {
+      "path": "/assets/engineer_v1/Component%204.png",
+      "type": "image",
+      "bytes": 839680
+    },
+    {
+      "path": "/assets/engineer_v1/Component%205.png",
+      "type": "image",
+      "bytes": 635735
+    },
+    {
+      "path": "/assets/engineer_v1/explosion.png",
+      "type": "image",
+      "bytes": 1343813
+    },
+    {
+      "path": "/assets/engineer_v1/factory.png",
+      "type": "image",
+      "bytes": 1324818
+    },
+    {
+      "path": "/assets/engineer_v1/factory%20lv1.png",
+      "type": "image",
+      "bytes": 1154481
+    },
+    {
+      "path": "/assets/engineer_v1/healing%20nexus.png",
+      "type": "image",
+      "bytes": 1212355
+    },
+    {
+      "path": "/assets/engineer_v1/linh%20ki%E1%BB%87n.png",
+      "type": "image",
+      "bytes": 1112267
+    },
+    {
+      "path": "/assets/engineer_v1/magnetic.png",
+      "type": "image",
+      "bytes": 1139067
+    },
+    {
+      "path": "/assets/engineer_v1/magnetic%20line.png",
+      "type": "image",
+      "bytes": 458302
+    },
+    {
+      "path": "/assets/engineer_v1/main%20visual.png",
+      "type": "image",
+      "bytes": 1329016
+    },
+    {
+      "path": "/assets/engineer_v1/mega%20factory.png",
+      "type": "image",
+      "bytes": 1334646
+    },
+    {
+      "path": "/assets/engineer_v1/mine.png",
+      "type": "image",
+      "bytes": 1364606
+    },
+    {
+      "path": "/assets/engineer_v1/mine%20lv2.png",
+      "type": "image",
+      "bytes": 1318904
+    },
+    {
+      "path": "/assets/engineer_v1/repair%20station.png",
+      "type": "image",
+      "bytes": 1593488
+    },
+    {
+      "path": "/assets/engineer_v1/repair%20station%20lv2.png",
+      "type": "image",
+      "bytes": 1680480
+    },
+    {
+      "path": "/assets/engineer_v1/rocket%20bullet.png",
+      "type": "image",
+      "bytes": 642439
+    },
+    {
+      "path": "/assets/engineer_v1/rocket%20tower%20already%20to%20fire.png",
+      "type": "image",
+      "bytes": 1333093
+    },
+    {
+      "path": "/assets/engineer_v1/rocket%20tower%20reloading.png",
+      "type": "image",
+      "bytes": 1221248
+    },
+    {
+      "path": "/assets/engineer_v1/SHIELD%20of%20nexus%20healing.png",
+      "type": "image",
+      "bytes": 1273505
+    },
+    {
+      "path": "/assets/engineer_v1/SHIELD%20of%20RAGE.png",
+      "type": "image",
+      "bytes": 1382066
+    },
+    {
+      "path": "/assets/engineer_v1/th%C3%A2n%20s%C3%BAng%20tr%C3%AAn%20tr%E1%BB%A5c%20xoay%20rocket%20nh%C6%B0ng%20%C4%91ang%20reload.png",
+      "type": "image",
+      "bytes": 1052388
+    },
+    {
+      "path": "/assets/engineer_v1/th%C3%A2n%20s%C3%BAng%20war%20machine.png",
+      "type": "image",
+      "bytes": 939453
+    },
+    {
+      "path": "/assets/engineer_v1/th%C3%A2n%20tr%C3%AAn%20tr%E1%BB%A5c%20xoay%20rocket.png",
+      "type": "image",
+      "bytes": 1055984
+    },
+    {
+      "path": "/assets/engineer_v1/the%20bottom%20of%20rocket%20tower.png",
+      "type": "image",
+      "bytes": 1284430
+    },
+    {
+      "path": "/assets/engineer_v1/thu%20linh%20ki%E1%BB%87n%20v%E1%BB%81.png",
+      "type": "image",
+      "bytes": 1228901
+    },
+    {
+      "path": "/assets/engineer_v1/tia%20t%E1%BB%AB%20h%C3%BAt%20linh%20ki%E1%BB%87n%20v%C3%A0%20c%C3%A1c%20v%E1%BA%ADt%20th%E1%BB%83%20h%E1%BB%A3p%20nh%E1%BA%A5t.png",
+      "type": "image",
+      "bytes": 423228
+    },
+    {
+      "path": "/assets/engineer_v1/Turret%201.png",
+      "type": "image",
+      "bytes": 1517831
+    },
+    {
+      "path": "/assets/engineer_v1/Turret%202.png",
+      "type": "image",
+      "bytes": 955002
+    },
+    {
+      "path": "/assets/engineer_v1/turret%20bulllet.png",
+      "type": "image",
+      "bytes": 439098
+    },
+    {
+      "path": "/assets/engineer_v1/upgrade%20circle%20in%200%25.png",
+      "type": "image",
+      "bytes": 1787178
+    },
+    {
+      "path": "/assets/engineer_v1/upgrade%20circle%20in%20100%25.png",
+      "type": "image",
+      "bytes": 1796774
+    },
+    {
+      "path": "/assets/engineer_v1/v%C3%B2ng%20tr%C3%B2n%20loading%20x%C3%A2y%20d%E1%BB%B1ng%200%25.png",
+      "type": "image",
+      "bytes": 2067858
+    },
+    {
+      "path": "/assets/engineer_v1/v%C3%B2ng%20tr%C3%B2n%20loading%20x%C3%A2y%20d%E1%BB%B1ng%20100%25.png",
+      "type": "image",
+      "bytes": 2072595
+    },
+    {
+      "path": "/assets/engineer_v1/war%20machine.png",
+      "type": "image",
+      "bytes": 1942227
+    },
+    {
+      "path": "/assets/engineer_v1/war%20machine%20bullet.png",
+      "type": "image",
+      "bytes": 1052784
+    },
+    {
+      "path": "/assets/engineer_v1/war%20machine%20fushion%20with%20ENGINEER.png",
+      "type": "image",
+      "bytes": 1136556
+    },
+    {
+      "path": "/assets/galaxy_v1/audio/BLUEHOLE.mp3",
+      "type": "audio",
+      "bytes": 75586
+    },
+    {
+      "path": "/assets/galaxy_v1/audio/GALAXY_IMPACT.wav",
+      "type": "audio",
+      "bytes": 2778770
+    },
+    {
+      "path": "/assets/galaxy_v1/audio/galaxy_pressure_contact.wav",
+      "type": "audio",
+      "bytes": 386074
+    },
+    {
+      "path": "/assets/galaxy_v1/audio/planet_explosion_sound_effect.wav",
+      "type": "audio",
+      "bytes": 352878
+    },
+    {
+      "path": "/assets/galaxy_v1/audio/planet_throwing_sound_effect.wav",
+      "type": "audio",
+      "bytes": 352878
+    },
+    {
+      "path": "/assets/galaxy_v1/audio/pressure_walking.wav",
+      "type": "audio",
+      "bytes": 2395966
+    },
+    {
+      "path": "/assets/galaxy_v1/audio/RAGE.mp3",
+      "type": "audio",
+      "bytes": 70145
+    },
+    {
+      "path": "/assets/galaxy_v1/audio/Sound_effect_for_galaxy_divine.wav",
+      "type": "audio",
+      "bytes": 2677182
+    },
+    {
+      "path": "/assets/galaxy_v1/audio/wall%20touch%20of%20component%20when%20hitted%20by%20pressure.%20ALSO%20for%20bluehole.mp3",
+      "type": "audio",
+      "bytes": 59520
+    },
+    {
+      "path": "/assets/galaxy_v1/images/129f515e-e273-4a57-bc3b-cc20a1232654.png",
+      "type": "image",
+      "bytes": 1015144
+    },
+    {
+      "path": "/assets/galaxy_v1/images/64e9fc08-8e47-4c3d-911e-99c40158a941.png",
+      "type": "image",
+      "bytes": 904851
+    },
+    {
+      "path": "/assets/galaxy_v1/images/84b87c41-679b-4cfa-90e4-1602709dcc88.png",
+      "type": "image",
+      "bytes": 1112738
+    },
+    {
+      "path": "/assets/galaxy_v1/images/95a3fae5-da8a-4169-b2d0-1432e72dfdef.png",
+      "type": "image",
+      "bytes": 618479
+    },
+    {
+      "path": "/assets/galaxy_v1/images/ef504fdf-95a6-49ca-8fe7-ad23c835d0db.png",
+      "type": "image",
+      "bytes": 1214589
+    },
+    {
+      "path": "/assets/galaxy_v1/images/GALAXY%20DIVINE.png",
+      "type": "image",
+      "bytes": 1227929
+    },
+    {
+      "path": "/assets/galaxy_v1/images/GALAXY%20DIVINE%20TELEPORT%20AND%20BEFORE%20PUNCH.png",
+      "type": "image",
+      "bytes": 1174722
+    },
+    {
+      "path": "/assets/galaxy_v1/images/GALAXY%20IMPACT.png",
+      "type": "image",
+      "bytes": 950549
+    },
+    {
+      "path": "/assets/galaxy_v1/images/main%20visual.png",
+      "type": "image",
+      "bytes": 1159695
+    },
+    {
+      "path": "/assets/galaxy_v1/images/planet%20throw%20frame%201.png",
+      "type": "image",
+      "bytes": 1188703
+    },
+    {
+      "path": "/assets/galaxy_v1/images/PLANET%20THROW%20FRAME%202.png",
+      "type": "image",
+      "bytes": 1181515
+    },
+    {
+      "path": "/assets/galaxy_v1/images/pressure%20visual%20before%20touch%20component.png",
+      "type": "image",
+      "bytes": 1273309
+    },
+    {
+      "path": "/assets/galaxy_v1/images/pressure%20visual%20touch%20component.png",
+      "type": "image",
+      "bytes": 1291010
+    },
+    {
+      "path": "/assets/galaxy_v1/images/pressureWalkingRing.png",
+      "type": "image",
+      "bytes": 1544913
+    },
+    {
+      "path": "/assets/galaxy_v1/images/pressureWalkingRingKeyed.png",
+      "type": "image",
+      "bytes": 1829371
+    },
+    {
+      "path": "/assets/galaxy_v1/images/TELEPORT%20LINE.png",
+      "type": "image",
+      "bytes": 55814
+    },
+    {
+      "path": "/assets/galaxy_v1/images/teleportLineGalaxy.png",
+      "type": "image",
+      "bytes": 342975
+    },
+    {
+      "path": "/assets/galaxy_v1/images/teleportLineGalaxyKeyed.png",
+      "type": "image",
+      "bytes": 338627
+    },
+    {
+      "path": "/assets/galaxy_v1/images/VISUAL%20FOR%20FULL%20OF%20BATTLE%20FIELD%20WHEN%20USE%20GALAXY%20IMPACT.png",
+      "type": "image",
+      "bytes": 3008935
+    },
+    {
+      "path": "/assets/galaxy_v1/images/VISUAL%20FOR%20THE%20ZONE%20OF%20GALAXY%20DIVINE.png",
+      "type": "image",
+      "bytes": 3403106
+    },
+    {
+      "path": "/assets/ice_v1/audio/ambient_freeze_crack.mp3",
+      "type": "audio",
+      "bytes": 68170
+    },
+    {
+      "path": "/assets/ice_v1/audio/ambient_ice_crack.mp3",
+      "type": "audio",
+      "bytes": 77783
+    },
+    {
+      "path": "/assets/ice_v1/audio/ambient_wind.mp3",
+      "type": "audio",
+      "bytes": 175167
+    },
+    {
+      "path": "/assets/ice_v1/audio/cast_freeze_hq.mp3",
+      "type": "audio",
+      "bytes": 94501
+    },
+    {
+      "path": "/assets/ice_v1/audio/cast_haki.mp3",
+      "type": "audio",
+      "bytes": 74021
+    },
+    {
+      "path": "/assets/ice_v1/audio/freeze_target.wav",
+      "type": "audio",
+      "bytes": 192078
+    },
+    {
+      "path": "/assets/ice_v1/audio/ice_age_call.mp3",
+      "type": "audio",
+      "bytes": 67752
+    },
+    {
+      "path": "/assets/ice_v1/audio/ice_dart_fly.wav",
+      "type": "audio",
+      "bytes": 192078
+    },
+    {
+      "path": "/assets/ice_v1/audio/ice_dart_hit.wav",
+      "type": "audio",
+      "bytes": 384078
+    },
+    {
+      "path": "/assets/ice_v1/normalized/frozenText.png",
+      "type": "image",
+      "bytes": 873461
+    },
+    {
+      "path": "/assets/ice_v1/normalized/fullArenaFrozenOverlay.png",
+      "type": "image",
+      "bytes": 3190499
+    },
+    {
+      "path": "/assets/ice_v1/normalized/iceAgeText.png",
+      "type": "image",
+      "bytes": 2068456
+    },
+    {
+      "path": "/assets/ice_v1/normalized/iceBlockOverlay.png",
+      "type": "image",
+      "bytes": 1834235
+    },
+    {
+      "path": "/assets/ice_v1/normalized/iceFingerGunPose.png",
+      "type": "image",
+      "bytes": 1376154
+    },
+    {
+      "path": "/assets/ice_v1/normalized/iceLaneStartSegment.png",
+      "type": "image",
+      "bytes": 1196319
+    },
+    {
+      "path": "/assets/ice_v1/normalized/iceMainStatic.png",
+      "type": "image",
+      "bytes": 1359823
+    },
+    {
+      "path": "/assets/ice_v1/normalized/iceShardProjectile.png",
+      "type": "image",
+      "bytes": 670952
+    },
+    {
+      "path": "/assets/ice_v1/normalized/manifest.json",
+      "type": "data",
+      "bytes": 3040
+    },
+    {
+      "path": "/assets/index-dgzwb46m.js",
+      "type": "script",
+      "bytes": 160888
+    },
+    {
+      "path": "/assets/loading/apex-chaos-title.png",
+      "type": "image",
+      "bytes": 823645
+    },
+    {
+      "path": "/assets/loading/loading-bar-frame.png",
+      "type": "image",
+      "bytes": 379983
+    },
+    {
+      "path": "/assets/loading/loading-bg-landscape.png",
+      "type": "image",
+      "bytes": 2765425
+    },
+    {
+      "path": "/assets/loading/loading-bg-portrait.png",
+      "type": "image",
+      "bytes": 2131583
+    },
+    {
+      "path": "/assets/menu/menu_btn_daily_tiktok_challenge.png",
+      "type": "image",
+      "bytes": 300990
+    },
+    {
+      "path": "/assets/menu/menu_btn_giai_dau.png",
+      "type": "image",
+      "bytes": 389458
+    },
+    {
+      "path": "/assets/menu/menu_btn_play.png",
+      "type": "image",
+      "bytes": 484401
+    },
+    {
+      "path": "/assets/menu/menu_btn_solo_1v1_local.png",
+      "type": "image",
+      "bytes": 383336
+    },
+    {
+      "path": "/assets/musician_v2/normalized/battle_idle_reference.png",
+      "type": "image",
+      "bytes": 1551892
+    },
+    {
+      "path": "/assets/musician_v2/normalized/drop_chord_32.png",
+      "type": "image",
+      "bytes": 2145761
+    },
+    {
+      "path": "/assets/musician_v2/normalized/major_chord_16.png",
+      "type": "image",
+      "bytes": 1809592
+    },
+    {
+      "path": "/assets/musician_v2/normalized/manifest.json",
+      "type": "data",
+      "bytes": 699
+    },
+    {
+      "path": "/assets/musician_v2/normalized/minor_chord_16.png",
+      "type": "image",
+      "bytes": 2119468
+    },
+    {
+      "path": "/assets/musician_v2/normalized/move_16.png",
+      "type": "image",
+      "bytes": 2026435
+    },
+    {
+      "path": "/assets/musician_v2/normalized/note_shot_16.png",
+      "type": "image",
+      "bytes": 1328722
+    },
+    {
+      "path": "/assets/musician_v2/normalized/rage_32.png",
+      "type": "image",
+      "bytes": 2323844
+    },
+    {
+      "path": "/assets/musician_v2/normalized/solo_chord_32.png",
+      "type": "image",
+      "bytes": 1773172
+    },
+    {
+      "path": "/assets/musician_v2/normalized/vfx_text_sheet.png",
+      "type": "image",
+      "bytes": 1820296
+    },
+    {
+      "path": "/assets/musician/normalized/battle_idle.png",
+      "type": "image",
+      "bytes": 1551892
+    },
+    {
+      "path": "/assets/musician/normalized/drop_chord_32.png",
+      "type": "image",
+      "bytes": 2145761
+    },
+    {
+      "path": "/assets/musician/normalized/major_chord_16.png",
+      "type": "image",
+      "bytes": 1809592
+    },
+    {
+      "path": "/assets/musician/normalized/minor_chord_16.png",
+      "type": "image",
+      "bytes": 2119468
+    },
+    {
+      "path": "/assets/musician/normalized/move_16.png",
+      "type": "image",
+      "bytes": 2026435
+    },
+    {
+      "path": "/assets/musician/normalized/note_shot_16.png",
+      "type": "image",
+      "bytes": 1328722
+    },
+    {
+      "path": "/assets/musician/normalized/rage_32.png",
+      "type": "image",
+      "bytes": 2323844
+    },
+    {
+      "path": "/assets/musician/normalized/solo_chord_32.png",
+      "type": "image",
+      "bytes": 1773172
+    },
+    {
+      "path": "/assets/musician/normalized/vfx_sheet.png",
+      "type": "image",
+      "bytes": 1820296
+    },
+    {
+      "path": "/assets/ninja_v1/audio/kunai_catch.mp3",
+      "type": "audio",
+      "bytes": 84697
+    },
+    {
+      "path": "/assets/ninja_v1/audio/kunai_throw_skill.wav",
+      "type": "audio",
+      "bytes": 201642
+    },
+    {
+      "path": "/assets/ninja_v1/audio/kunai_wall_bounce.wav",
+      "type": "audio",
+      "bytes": 384078
+    },
+    {
+      "path": "/assets/ninja_v1/audio/rasengan.mp3",
+      "type": "audio",
+      "bytes": 78619
+    },
+    {
+      "path": "/assets/ninja_v1/audio/shuriken_hit_body.mp3",
+      "type": "audio",
+      "bytes": 19968
+    },
+    {
+      "path": "/assets/ninja_v1/audio/shuriken_hit_wall.mp3",
+      "type": "audio",
+      "bytes": 23040
+    },
+    {
+      "path": "/assets/ninja_v1/audio/shuriken_throw.wav",
+      "type": "audio",
+      "bytes": 1412294
+    },
+    {
+      "path": "/assets/ninja_v1/audio/teleport.mp3",
+      "type": "audio",
+      "bytes": 15506
+    },
+    {
+      "path": "/assets/ninja_v1/normalized/electricBallGrow16.png",
+      "type": "image",
+      "bytes": 2012613
+    },
+    {
+      "path": "/assets/ninja_v1/normalized/kunaiStatic.png",
+      "type": "image",
+      "bytes": 416158
+    },
+    {
+      "path": "/assets/ninja_v1/normalized/manifest.json",
+      "type": "data",
+      "bytes": 1742
+    },
+    {
+      "path": "/assets/ninja_v1/normalized/ninjaAirPalmStatic.png",
+      "type": "image",
+      "bytes": 1022587
+    },
+    {
+      "path": "/assets/ninja_v1/normalized/ninjaMainStatic.png",
+      "type": "image",
+      "bytes": 874443
+    },
+    {
+      "path": "/assets/ninja_v1/normalized/ninjaThrowReleasedStatic.png",
+      "type": "image",
+      "bytes": 883071
+    },
+    {
+      "path": "/assets/ninja_v1/normalized/shurikenStatic.png",
+      "type": "image",
+      "bytes": 524474
+    },
+    {
+      "path": "/assets/puppet_v1/normalized/effigy_wall_4.png",
+      "type": "image",
+      "bytes": 1136688
+    },
+    {
+      "path": "/assets/puppet_v1/normalized/manifest.json",
+      "type": "data",
+      "bytes": 667
+    },
+    {
+      "path": "/assets/puppet_v1/normalized/puppet_dissolve_16.png",
+      "type": "image",
+      "bytes": 1475831
+    },
+    {
+      "path": "/assets/puppet_v1/normalized/puppet_main_static.png",
+      "type": "image",
+      "bytes": 1376657
+    },
+    {
+      "path": "/assets/puppet_v1/normalized/puppet_rage_static.png",
+      "type": "image",
+      "bytes": 1838573
+    },
+    {
+      "path": "/assets/puppet_v1/normalized/straw_monster_attack_16.png",
+      "type": "image",
+      "bytes": 2370292
+    },
+    {
+      "path": "/assets/puppet_v1/normalized/straw_monster_static.png",
+      "type": "image",
+      "bytes": 2288448
+    },
+    {
+      "path": "/assets/puppet_v1/normalized/transfer_link_16.png",
+      "type": "image",
+      "bytes": 552570
+    },
+    {
+      "path": "/assets/saitama/saitama-boss.png",
+      "type": "image",
+      "bytes": 948697
+    },
+    {
+      "path": "/assets/soccer_v1/audio/ball-bounce-hit.wav",
+      "type": "audio",
+      "bytes": 246152
+    },
+    {
+      "path": "/assets/soccer_v1/audio/ball-catch.wav",
+      "type": "audio",
+      "bytes": 377132
+    },
+    {
+      "path": "/assets/soccer_v1/audio/chase-down.mp3",
+      "type": "audio",
+      "bytes": 80640
+    },
+    {
+      "path": "/assets/soccer_v1/audio/goal-impact.wav",
+      "type": "audio",
+      "bytes": 1584006
+    },
+    {
+      "path": "/assets/soccer_v1/audio/penalty-activation.wav",
+      "type": "audio",
+      "bytes": 2684074
+    },
+    {
+      "path": "/assets/soccer_v1/audio/penalty-whistle.wav",
+      "type": "audio",
+      "bytes": 415446
+    },
+    {
+      "path": "/assets/soccer_v1/audio/possession-ambience.wav",
+      "type": "audio",
+      "bytes": 2781290
+    },
+    {
+      "path": "/assets/soccer_v1/audio/power-kick.wav",
+      "type": "audio",
+      "bytes": 379330
+    },
+    {
+      "path": "/assets/soccer_v1/audio/skill-impact.mp3",
+      "type": "audio",
+      "bytes": 34409
+    },
+    {
+      "path": "/assets/soccer_v1/images/ball.png",
+      "type": "image",
+      "bytes": 200697
+    },
+    {
+      "path": "/assets/soccer_v1/images/field-overlay.png",
+      "type": "image",
+      "bytes": 489042
+    },
+    {
+      "path": "/assets/soccer_v1/images/penalty-reticle.png",
+      "type": "image",
+      "bytes": 221393
+    },
+    {
+      "path": "/assets/soccer_v1/kick/frame_001.png",
+      "type": "image",
+      "bytes": 116653
+    },
+    {
+      "path": "/assets/soccer_v1/kick/frame_002.png",
+      "type": "image",
+      "bytes": 115969
+    },
+    {
+      "path": "/assets/soccer_v1/kick/frame_003.png",
+      "type": "image",
+      "bytes": 128229
+    },
+    {
+      "path": "/assets/soccer_v1/kick/frame_004.png",
+      "type": "image",
+      "bytes": 132430
+    },
+    {
+      "path": "/assets/soccer_v1/kick/frame_005.png",
+      "type": "image",
+      "bytes": 134550
+    },
+    {
+      "path": "/assets/soccer_v1/kick/frame_006.png",
+      "type": "image",
+      "bytes": 114694
+    },
+    {
+      "path": "/assets/soccer_v1/kick/frame_007.png",
+      "type": "image",
+      "bytes": 116880
+    },
+    {
+      "path": "/assets/soccer_v1/kick/frame_008.png",
+      "type": "image",
+      "bytes": 126846
+    },
+    {
+      "path": "/assets/soccer_v1/kick/frame_009.png",
+      "type": "image",
+      "bytes": 120653
+    },
+    {
+      "path": "/assets/soccer_v1/manifest.json",
+      "type": "data",
+      "bytes": 188
+    },
+    {
+      "path": "/assets/soccer_v1/move/frame_065.png",
+      "type": "image",
+      "bytes": 165848
+    },
+    {
+      "path": "/assets/soccer_v1/move/frame_066.png",
+      "type": "image",
+      "bytes": 159800
+    },
+    {
+      "path": "/assets/string_v1/audio/birdcage_sound.wav",
+      "type": "audio",
+      "bytes": 460080
+    },
+    {
+      "path": "/assets/string_v1/audio/birdcage_voice.mp3",
+      "type": "audio",
+      "bytes": 117799
+    },
+    {
+      "path": "/assets/string_v1/audio/claws.wav",
+      "type": "audio",
+      "bytes": 220578
+    },
+    {
+      "path": "/assets/string_v1/audio/fivecolor_strings_voice.mp3",
+      "type": "audio",
+      "bytes": 63047
+    },
+    {
+      "path": "/assets/string_v1/audio/overheat_voice.mp3",
+      "type": "audio",
+      "bytes": 55106
+    },
+    {
+      "path": "/assets/string_v1/audio/overheat.wav",
+      "type": "audio",
+      "bytes": 939934
+    },
+    {
+      "path": "/assets/string_v1/audio/stringshot_voice.mp3",
+      "type": "audio",
+      "bytes": 59285
+    },
+    {
+      "path": "/assets/string_v1/audio/stringshot.wav",
+      "type": "audio",
+      "bytes": 309334
+    },
+    {
+      "path": "/assets/string_v1/audio/thread_break.mp3",
+      "type": "audio",
+      "bytes": 33062
+    },
+    {
+      "path": "/assets/string_v1/audio/thread_tension.mp3",
+      "type": "audio",
+      "bytes": 65245
+    },
+    {
+      "path": "/assets/string_v1/audio/web_lock.mp3",
+      "type": "audio",
+      "bytes": 12890
+    },
+    {
+      "path": "/assets/string_v1/normalized/birdCage.png",
+      "type": "image",
+      "bytes": 756239
+    },
+    {
+      "path": "/assets/string_v1/normalized/bodyThreadWeb.png",
+      "type": "image",
+      "bytes": 1453164
+    },
+    {
+      "path": "/assets/string_v1/normalized/fiveColorClawFrames.png",
+      "type": "image",
+      "bytes": 2086322
+    },
+    {
+      "path": "/assets/string_v1/normalized/fiveColorParasiteText.png",
+      "type": "image",
+      "bytes": 1969145
+    },
+    {
+      "path": "/assets/string_v1/normalized/fiveColorSlash.png",
+      "type": "image",
+      "bytes": 1610252
+    },
+    {
+      "path": "/assets/string_v1/normalized/fiveColorStringText.png",
+      "type": "image",
+      "bytes": 1566816
+    },
+    {
+      "path": "/assets/string_v1/normalized/godThreadLance.png",
+      "type": "image",
+      "bytes": 908113
+    },
+    {
+      "path": "/assets/string_v1/normalized/godThreadsCircle.png",
+      "type": "image",
+      "bytes": 2206979
+    },
+    {
+      "path": "/assets/string_v1/normalized/godThreadsPose.png",
+      "type": "image",
+      "bytes": 1526696
+    },
+    {
+      "path": "/assets/string_v1/normalized/godThreadsText.png",
+      "type": "image",
+      "bytes": 2231723
+    },
+    {
+      "path": "/assets/string_v1/normalized/overheatPrepPose.png",
+      "type": "image",
+      "bytes": 1708774
+    },
+    {
+      "path": "/assets/string_v1/normalized/overheatThread.png",
+      "type": "image",
+      "bytes": 969476
+    },
+    {
+      "path": "/assets/string_v1/normalized/overheatWhipPose.png",
+      "type": "image",
+      "bytes": 1534672
+    },
+    {
+      "path": "/assets/string_v1/normalized/parasiteStringText.png",
+      "type": "image",
+      "bytes": 1633001
+    },
+    {
+      "path": "/assets/string_v1/normalized/pinkThreadWeb.png",
+      "type": "image",
+      "bytes": 1334397
+    },
+    {
+      "path": "/assets/string_v1/normalized/silverThread.png",
+      "type": "image",
+      "bytes": 872295
+    },
+    {
+      "path": "/assets/string_v1/normalized/stringIdleAltPose.png",
+      "type": "image",
+      "bytes": 1695456
+    },
+    {
+      "path": "/assets/string_v1/normalized/stringMainStatic.png",
+      "type": "image",
+      "bytes": 1491922
+    },
+    {
+      "path": "/assets/string_v1/normalized/stringshotOverheatText.png",
+      "type": "image",
+      "bytes": 1638089
+    },
+    {
+      "path": "/assets/string_v1/normalized/stringShotPose.png",
+      "type": "image",
+      "bytes": 1729657
+    },
+    {
+      "path": "/assets/string_v1/normalized/stringShotThread.png",
+      "type": "image",
+      "bytes": 913149
+    },
+    {
+      "path": "/sniper_cloak_move_sprite.png",
+      "type": "image",
+      "bytes": 81409
+    },
+    {
+      "path": "/sniper_cloak_sprite.png",
+      "type": "image",
+      "bytes": 119189
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "moveFrames": 2,
+  "moveFrameFiles": [
+    "frame_065.png",
+    "frame_066.png"
+  ],
+  "kickFrames": 9,
+  "moveFps": 4,
+  "kickFps": 30,
+  "generatedAt": "2026-06-14T10:11:54+07:00"
+}

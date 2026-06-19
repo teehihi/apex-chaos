@@ -161,6 +161,7 @@ Implemented content-facing systems:
 
 - random match
 - full tournament
+- daily TikTok challenge with seeded matchup, share prompt, retry button, and caption copy
 - browser smoke/balance trigger
 - replay seed storage
 - highlight detection for rage comeback, big hit, clutch final card, 1HP survival
