@@ -2,6 +2,7 @@
   "name": "apex-chaos-vite-refactor",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.15.9",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
