@@ -129,7 +129,7 @@ function warmMenuAudio() {
 
 async function loadAssetManifest() {
   try {
-    const response = await fetch(`/asset-manifest.json?v=${Date.now()}`, { cache: 'no-store' });
+    const response = await fetch('/asset-manifest.json', { cache: 'default' });
     if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
     return await response.json();
   } catch (error) {
@@ -271,6 +271,15 @@ function injectApexEngine(scriptRef, engineSrc) {
     script.src = engineSrc;
     script.async = false;
     script.dataset.apexEngine = 'true';
+    const loadRuntime = (src, dataKey) => new Promise((runtimeResolve, runtimeReject) => {
+      const runtime = document.createElement('script');
+      runtime.src = src;
+      runtime.async = false;
+      runtime.dataset[dataKey] = 'true';
+      runtime.onload = runtimeResolve;
+      runtime.onerror = () => runtimeReject(new Error(`Failed to load ${src}`));
+      document.body.appendChild(runtime);
+    });
     const finishRuntimeLoad = () => {
       const bridge = document.createElement('script');
       bridge.textContent = `
@@ -295,30 +304,29 @@ function injectApexEngine(scriptRef, engineSrc) {
       window.__apexEngineReady = true;
       resolve();
     };
-    script.onload = () => {
-      const manualLab = document.createElement('script');
-      manualLab.src = `/manualLab.js?v=${Date.now()}`;
-      manualLab.async = false;
-      manualLab.dataset.apexManualLab = 'true';
-      manualLab.onload = () => {
+    script.onload = async () => {
+      try {
+        await loadRuntime('/game/modes/tamChienRuntime.js', 'apexTamChienRuntime');
+        await loadRuntime('/game/guards/apexBattleVisibilityGuard.js', 'apexBattleVisibilityGuard');
+        await loadRuntime('/game/guards/apexShotgunLateBinder.js', 'apexShotgunLateBinder');
+        await loadRuntime('/game/fighters/katanaRuntime.js', 'apexKatanaRuntime');
+        await loadRuntime('/game/fighters/fangRuntime.js', 'apexFangRuntime');
+        await loadRuntime('/game/ui/apexCharacterSelectUi.js', 'apexCharacterSelectUi');
+        await loadRuntime('/game/ui/apexPickRuntime.js', 'apexPickRuntime');
+        await loadRuntime('/game/core/apexPoseLockRuntime.js', 'apexPoseLockRuntime');
+        await loadRuntime('/manualLab.js', 'apexManualLab');
         window.APEX_MANUAL_ROOM_WS_URL = MANUAL_ROOM_WS_URL;
-        const manualLabOnline = document.createElement('script');
-        manualLabOnline.src = `/manualLabOnline.js?v=${Date.now()}`;
-        manualLabOnline.async = false;
-        manualLabOnline.dataset.apexManualLabOnline = 'true';
-        manualLabOnline.onload = finishRuntimeLoad;
-        manualLabOnline.onerror = () => {
+        try {
+          await loadRuntime('/manualLabOnline.js', 'apexManualLabOnline');
+        } catch (error) {
           console.warn('[asset-loader] Failed APEX CONTROL online runtime; local control mode still works.');
-          finishRuntimeLoad();
-        };
-        document.body.appendChild(manualLabOnline);
-      };
-      manualLab.onerror = () => {
-        console.warn('[asset-loader] Failed APEX CONTROL runtime.');
+        }
+        finishRuntimeLoad();
+      } catch (error) {
+        console.warn('[asset-loader] Failed required game runtime.', error);
         window.__apexEngineLoadPromise = null;
-        reject(new Error('Failed to load /manualLab.js'));
-      };
-      document.body.appendChild(manualLab);
+        reject(error);
+      }
     };
     script.onerror = () => {
       console.warn(`[asset-loader] Failed engine script: ${engineSrc}`);
@@ -350,7 +358,7 @@ export default function App() {
   useEffect(() => {
     if (once.loaded) return undefined;
     let cancelled = false;
-    const engineSrc = `/apexEngine.js?v=${Date.now()}`;
+    const engineSrc = '/apexEngine.js';
 
     const boot = async () => {
       warmMenuAudio();

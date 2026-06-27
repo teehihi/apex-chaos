@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-27T13:30:40.871Z",
+  "generatedAt": "2026-06-27T15:17:01.496Z",
   "loadingAssets": {
     "bgPortrait": "/assets/loading/loading-bg-portrait.webp",
     "bgLandscape": "/assets/loading/loading-bg-landscape.webp",
@@ -10,7 +10,7 @@
     {
       "path": "/apexEngine.js",
       "type": "script",
-      "bytes": 1445680
+      "bytes": 1183273
     },
     {
       "path": "/assets/arcade_v1/normalized/battle_idle_reference.webp",
@@ -875,7 +875,7 @@
     {
       "path": "/assets/fang_v1/manifest.json",
       "type": "data",
-      "bytes": 46323
+      "bytes": 44361
     },
     {
       "path": "/assets/fang_v1/moonIcon.webp",
@@ -1435,7 +1435,7 @@
     {
       "path": "/assets/katana_v1/manifest.json",
       "type": "data",
-      "bytes": 18859
+      "bytes": 18051
     },
     {
       "path": "/assets/katana_v1/pickButton.webp",
@@ -1825,7 +1825,7 @@
     {
       "path": "/assets/pick_ui_final/assets/card-frame-imagen-portrait-3x4-exact-layers/card-frame-imagen-portrait-3x4-exact-layers-manifest.json",
       "type": "data",
-      "bytes": 2083
+      "bytes": 2038
     },
     {
       "path": "/assets/pick_ui_final/assets/card-frame-imagen-portrait-3x4-no-hole-layers/61-card-frame-imagen-portrait-3x4-solid-base-no-holes.webp",
@@ -1860,7 +1860,7 @@
     {
       "path": "/assets/pick_ui_final/assets/card-frame-imagen-portrait-3x4-no-hole-layers/card-frame-imagen-portrait-3x4-no-hole-layers-manifest.json",
       "type": "data",
-      "bytes": 757
+      "bytes": 741
     },
     {
       "path": "/assets/pick_ui_final/assets/card-frame-imagen-portrait-3x4-open-center-no-hex-layers/71-card-frame-imagen-portrait-3x4-base-open-center-no-hex-hole.webp",
@@ -1895,7 +1895,7 @@
     {
       "path": "/assets/pick_ui_final/assets/card-frame-imagen-portrait-3x4-open-center-no-hex-layers/card-frame-imagen-portrait-3x4-open-center-no-hex-layers-manifest.json",
       "type": "data",
-      "bytes": 791
+      "bytes": 777
     },
     {
       "path": "/assets/pick_ui_final/assets/card-frame-imagen-portrait-3x4/42-card-frame-imagen-portrait-3x4-color-mask.webp",
@@ -1945,7 +1945,7 @@
     {
       "path": "/assets/pick_ui_final/assets/champions.json",
       "type": "data",
-      "bytes": 3957
+      "bytes": 3794
     },
     {
       "path": "/assets/pick_ui_final/assets/generated-cards/engineer-card-normal.webp",
@@ -2200,12 +2200,12 @@
     {
       "path": "/assets/pick_ui_final/pick-layout-card-system-v1.json",
       "type": "data",
-      "bytes": 53550
+      "bytes": 51697
     },
     {
       "path": "/assets/pick_ui_final/pick-layout-final-v1.json",
       "type": "data",
-      "bytes": 89566
+      "bytes": 86522
     },
     {
       "path": "/assets/puppet_v1/normalized/effigy_wall_4.webp",
@@ -2325,7 +2325,7 @@
     {
       "path": "/assets/shotgun_v1/manifest.json",
       "type": "data",
-      "bytes": 5560
+      "bytes": 5307
     },
     {
       "path": "/assets/shotgun_v1/muzzle.webp",
@@ -2826,6 +2826,46 @@
       "path": "/assets/ui_2026/tab-full-roster.webp",
       "type": "image",
       "bytes": 25854
+    },
+    {
+      "path": "/game/core/apexPoseLockRuntime.js",
+      "type": "script",
+      "bytes": 7306
+    },
+    {
+      "path": "/game/fighters/fangRuntime.js",
+      "type": "script",
+      "bytes": 39959
+    },
+    {
+      "path": "/game/fighters/katanaRuntime.js",
+      "type": "script",
+      "bytes": 92162
+    },
+    {
+      "path": "/game/guards/apexBattleVisibilityGuard.js",
+      "type": "script",
+      "bytes": 1361
+    },
+    {
+      "path": "/game/guards/apexShotgunLateBinder.js",
+      "type": "script",
+      "bytes": 1230
+    },
+    {
+      "path": "/game/modes/tamChienRuntime.js",
+      "type": "script",
+      "bytes": 41795
+    },
+    {
+      "path": "/game/ui/apexCharacterSelectUi.js",
+      "type": "script",
+      "bytes": 22486
+    },
+    {
+      "path": "/game/ui/apexPickRuntime.js",
+      "type": "script",
+      "bytes": 31690
     },
     {
       "path": "/manualLab.js",
