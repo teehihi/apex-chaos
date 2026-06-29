@@ -3,7 +3,7 @@ import {
   loadDeferredGameRuntimes,
   loadRequiredGameRuntimes,
 } from './game/runtimeLoader.js';
-import { prefetchDeferredRuntimeSources, preloadRuntimeSources } from './game/runtimeManifest.js';
+import { preloadRuntimeSources } from './game/runtimeManifest.js';
 
 const once = { loaded: false };
 const MANUAL_ROOM_WS_URL = import.meta.env.VITE_MANUAL_ROOM_WS_URL || '';
@@ -49,6 +49,8 @@ const MENU_BUTTONS = [
 const LOADING_LABELS = ['LOADING ASSETS', 'PREPARING ARENA', 'SYNCHRONIZING VFX'];
 const IMAGE_PRELOAD_TIMEOUT_MS = 7000;
 const RUNTIME_READY_TIMEOUT_MS = 4500;
+const LOADER_READY_HOLD_MS = 160;
+const LOADER_FADE_MS = 280;
 let preloadAudioContext = null;
 
 const DEFERRED_RUNTIME_ACTION_GROUPS = {
@@ -170,24 +172,23 @@ function uniqueAssets(manifestAssets, engineSrc) {
   });
 }
 
-function criticalBootAssets(engineSrc) {
+function criticalBootAssets() {
   const portraitViewport = window.innerHeight > window.innerWidth || window.innerWidth <= 700;
-  const primaryBackground = portraitViewport ? LOADING_ASSETS.bgPortrait : LOADING_ASSETS.bgLandscape;
+  const loadingBackground = portraitViewport ? LOADING_ASSETS.bgPortrait : LOADING_ASSETS.bgLandscape;
+  const menuBackground = portraitViewport ? UI_2026_ASSETS.menuBgPortrait : UI_2026_ASSETS.menuBgLandscape;
 
   return [
-    { path: primaryBackground, type: 'image', required: true },
+    { path: loadingBackground, type: 'image', required: true },
     { path: LOADING_ASSETS.gameTitle, type: 'image', required: true },
-    { path: MENU_AUDIO, type: 'audio', required: true },
-    ...Object.values(UI_2026_ASSETS).map((path) => ({ path, type: 'image', required: true })),
+    { path: LOADING_ASSETS.loadingBarFrame, type: 'image', required: true },
+    { path: menuBackground, type: 'image', required: true },
+    { path: UI_2026_ASSETS.menuVfxOverlay, type: 'image', required: true },
     ...MENU_BUTTONS.filter((button) => button.asset).map((button) => ({ path: button.asset, type: 'image', required: true })),
   ];
 }
 
 function blockingBootAssets(engineSrc) {
-  return uniqueAssets([
-    ...criticalBootAssets(engineSrc),
-    ...Object.values(LOADING_ASSETS).map((path) => ({ path, type: 'image', required: true })),
-  ], engineSrc);
+  return uniqueAssets(criticalBootAssets(), engineSrc);
 }
 
 async function preloadAssetList(assets, onProgress) {
@@ -291,8 +292,9 @@ function injectApexEngine(scriptRef, engineSrc) {
         try { window.goToTournament = goToTournament; } catch (error) {}
         try { window.resetTournament = resetTournament; } catch (error) {}
         try {
+          const apexOriginalStartMatch = startMatch;
           window.startMatch = function(...args) {
-            const run = () => startMatch(...args);
+            const run = () => apexOriginalStartMatch(...args);
             const ready = window.__apexEnsureDeferredRuntimes?.('battle');
             return ready?.then ? ready.then(run) : run();
           };
@@ -358,9 +360,7 @@ export default function App() {
     const engineSrc = '/apexEngine.js';
 
     const boot = async () => {
-      warmMenuAudio();
       preloadRuntimeSources();
-      prefetchDeferredRuntimeSources();
       const enginePromise = injectApexEngine(scriptRef, engineSrc);
       enginePromise.catch(() => {});
       const preloadResult = await preloadGameAssets(engineSrc, (progress) => {
@@ -379,12 +379,24 @@ export default function App() {
       waitForRuntimeAssetReadiness().catch((error) => {
         console.warn('[asset-loader] Background runtime readiness check failed.', error);
       });
-      await waitForChampionVisualWarmup();
       if (cancelled) return;
       once.loaded = true;
       setGameReady(true);
-      warmBattleRuntimesInBackground('boot-ready', 600);
-      setLoader((current) => ({ ...current, active: false, fading: false, percent: 100, status: 'READY' }));
+      const warmNonCriticalAssets = () => {
+        warmMenuAudio().catch(() => {});
+      };
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(warmNonCriticalAssets, { timeout: 2500 });
+      } else {
+        window.setTimeout(warmNonCriticalAssets, 1200);
+      }
+      setLoader((current) => ({ ...current, active: true, fading: false, percent: 100, status: 'READY' }));
+      await wait(LOADER_READY_HOLD_MS);
+      if (cancelled) return;
+      setLoader((current) => ({ ...current, fading: true }));
+      await wait(LOADER_FADE_MS);
+      if (cancelled) return;
+      setLoader((current) => ({ ...current, active: false, fading: false }));
     };
 
     boot().catch((error) => {
@@ -441,10 +453,11 @@ export default function App() {
   };
 
   useEffect(() => {
-    const audio = new Audio(MENU_AUDIO);
+    const audio = new Audio();
     audio.loop = true;
-    audio.preload = 'auto';
+    audio.preload = 'none';
     audio.volume = 0.48;
+    audio.src = MENU_AUDIO;
     audio.__apexMenuMusic = true;
     menuAudioRef.current = audio;
     window.apexStopMenuMusic = (reset = false) => stopMenuMusic(reset);
@@ -476,7 +489,6 @@ export default function App() {
     document.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('blur', pauseForHiddenTab);
     window.addEventListener('focus', resumeForVisibleTab);
-    playMenuMusic(true);
 
     return () => {
       window.removeEventListener('pointerdown', unlock);
@@ -510,7 +522,14 @@ export default function App() {
         playMenuMusic(false);
       }
       callApexGlobal(name, true);
-      if (name === 'goToSelect') warmBattleRuntimesInBackground('goToSelect');
+      if (name === 'goToSelect') {
+        warmBattleRuntimesInBackground('goToSelect');
+        window.setTimeout(() => {
+          waitForChampionVisualWarmup().catch((error) => {
+            console.warn('[asset-loader] Background champion visual warmup failed.', error);
+          });
+        }, 500);
+      }
       if (options.startsMatch || name === 'startMatch' || name === 'startSoloMode' || name === 'startTrialMode') {
         stopMenuMusic(true);
       }
@@ -536,8 +555,10 @@ export default function App() {
     {loader.active && (
       <div id="loading-screen" className={loader.fading ? 'is-fading' : ''} aria-live="polite">
         <div className="loading-fallback" />
-        <img className="loading-bg loading-bg-landscape" src={LOADING_ASSETS.bgLandscape} alt="" />
-        <img className="loading-bg loading-bg-portrait" src={LOADING_ASSETS.bgPortrait} alt="" />
+        <picture>
+          <source media="(orientation: portrait), (max-width: 700px)" srcSet={LOADING_ASSETS.bgPortrait} />
+          <img className="loading-bg" src={LOADING_ASSETS.bgLandscape} alt="" />
+        </picture>
         <div className="loading-vignette" />
         <img className="loading-title" src={LOADING_ASSETS.gameTitle} alt="Apex Chaos" />
         <div className="loading-bar-shell">

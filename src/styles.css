@@ -1898,12 +1898,13 @@ body.manual-lab-mode #combat-inspector {
         overflow: hidden;
         background: #020508;
         opacity: 1;
-        transition: opacity .48s ease;
+        transition: opacity .28s ease-out;
         pointer-events: auto;
     }
 
     #loading-screen.is-fading {
         opacity: 0;
+        pointer-events: none;
     }
 
     .loading-fallback,
@@ -1992,7 +1993,9 @@ body.manual-lab-mode #combat-inspector {
             linear-gradient(90deg, rgba(255,180,56,.95), rgba(80,217,255,.95) 68%, rgba(206,247,255,.98)),
             repeating-linear-gradient(90deg, rgba(255,255,255,.35) 0 8px, transparent 8px 18px);
         box-shadow: 0 0 18px rgba(57,211,255,.72), inset 0 0 16px rgba(255,255,255,.35);
-        transition: width .18s ease-out;
+        /* Progress updates can arrive in a burst from the parallel asset workers.
+           Render the fill immediately so it never trails the numeric percentage. */
+        transition: none;
     }
 
     .loading-status,

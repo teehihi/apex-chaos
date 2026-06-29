@@ -3,6 +3,7 @@ import {
   BOOT_GAME_RUNTIMES,
   DEFERRED_GAME_RUNTIMES,
   MODE_DEFERRED_RUNTIMES,
+  hintRuntimeSources,
   prefetchDeferredRuntimeSources,
   preloadRuntimeSources,
 } from './runtimeManifest.js';
@@ -60,7 +61,7 @@ export function loadDeferredGameRuntimes(group = 'all') {
   const runtimes = RUNTIME_GROUPS[group] || RUNTIME_GROUPS.all;
   const promiseKey = `__apexDeferredRuntimesPromise_${group}`;
   if (window[promiseKey]) return window[promiseKey];
-  prefetchDeferredRuntimeSources();
+  hintRuntimeSources(runtimes, 'prefetch');
   window[promiseKey] = loadRuntimeList(runtimes)
     .then(() => {
       window[`__apexDeferredRuntimesReady_${group}`] = true;
