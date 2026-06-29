@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { loadClassicRuntime, loadRequiredGameRuntimes } from './game/runtimeLoader.js';
-import { preloadRuntimeSources } from './game/runtimeManifest.js';
+import {
+  loadDeferredGameRuntimes,
+  loadRequiredGameRuntimes,
+} from './game/runtimeLoader.js';
+import { prefetchDeferredRuntimeSources, preloadRuntimeSources } from './game/runtimeManifest.js';
 
 const once = { loaded: false };
 const MANUAL_ROOM_WS_URL = import.meta.env.VITE_MANUAL_ROOM_WS_URL || '';
@@ -47,6 +50,17 @@ const LOADING_LABELS = ['LOADING ASSETS', 'PREPARING ARENA', 'SYNCHRONIZING VFX'
 const IMAGE_PRELOAD_TIMEOUT_MS = 7000;
 const RUNTIME_READY_TIMEOUT_MS = 4500;
 let preloadAudioContext = null;
+
+const DEFERRED_RUNTIME_ACTIONS = new Set([
+  'startMatch',
+  'startSoloMode',
+  'startTrialMode',
+  'startTamChienMode',
+  'goToSoloSelect',
+  'goToTrialSelect',
+  'goToManualLabSelect',
+  'goToTournament',
+]);
 
 function callApexGlobal(name, enabled = true) {
   if (!enabled) return;
@@ -268,7 +282,13 @@ function injectApexEngine(scriptRef, engineSrc) {
         try { window.goToSelect = goToSelect; } catch (error) {}
         try { window.goToTournament = goToTournament; } catch (error) {}
         try { window.resetTournament = resetTournament; } catch (error) {}
-        try { window.startMatch = startMatch; } catch (error) {}
+        try {
+          window.startMatch = function(...args) {
+            const run = () => startMatch(...args);
+            const ready = window.__apexEnsureDeferredRuntimes?.();
+            return ready?.then ? ready.then(run) : run();
+          };
+        } catch (error) {}
         try { window.startSoloMode = startSoloMode; } catch (error) {}
         try { window.goToSoloSelect = goToSoloSelect; } catch (error) {}
         try { window.goToTrialSelect = goToTrialSelect; } catch (error) {}
@@ -289,11 +309,7 @@ function injectApexEngine(scriptRef, engineSrc) {
       try {
         await loadRequiredGameRuntimes();
         window.APEX_MANUAL_ROOM_WS_URL = MANUAL_ROOM_WS_URL;
-        try {
-          await loadClassicRuntime('/manualLabOnline.js', 'apexManualLabOnline');
-        } catch (error) {
-          console.warn('[asset-loader] Failed APEX CONTROL online runtime; local control mode still works.');
-        }
+        window.__apexEnsureDeferredRuntimes = loadDeferredGameRuntimes;
         finishRuntimeLoad();
       } catch (error) {
         console.warn('[asset-loader] Failed required game runtime.', error);
@@ -336,6 +352,7 @@ export default function App() {
     const boot = async () => {
       warmMenuAudio();
       preloadRuntimeSources();
+      prefetchDeferredRuntimeSources();
       const enginePromise = injectApexEngine(scriptRef, engineSrc);
       enginePromise.catch(() => {});
       const preloadResult = await preloadGameAssets(engineSrc, (progress) => {
@@ -463,24 +480,30 @@ export default function App() {
     };
   }, []);
 
-  const runApex = (name, options = {}) => {
+  const runApex = async (name, options = {}) => {
     if (!gameReady) return;
-    if (options.startsMatch) {
-      stopMenuMusic(true);
-      window.apexStopBattleAudio?.();
-    } else if (name === 'startMatch' || name === 'startSoloMode' || name === 'startTrialMode') {
-      stopMenuMusic(true);
-      window.apexStopBattleAudio?.();
-    } else if (name === 'goToMenu' || name === 'exitAutoBattle') {
-      window.apexStopBattleAudio?.();
-      playMenuMusic(true);
-    } else if (name === 'goToSelect' || name === 'goToManualLabSelect' || name === 'goToTournament' || name === 'goToSoloSelect') {
-      window.apexStopBattleAudio?.();
-      playMenuMusic(false);
-    }
-    callApexGlobal(name, true);
-    if (options.startsMatch || name === 'startMatch' || name === 'startSoloMode' || name === 'startTrialMode') {
-      stopMenuMusic(true);
+    try {
+      const needsDeferred = options.startsMatch || DEFERRED_RUNTIME_ACTIONS.has(name);
+      if (needsDeferred) await loadDeferredGameRuntimes();
+      if (options.startsMatch) {
+        stopMenuMusic(true);
+        window.apexStopBattleAudio?.();
+      } else if (name === 'startMatch' || name === 'startSoloMode' || name === 'startTrialMode') {
+        stopMenuMusic(true);
+        window.apexStopBattleAudio?.();
+      } else if (name === 'goToMenu' || name === 'exitAutoBattle') {
+        window.apexStopBattleAudio?.();
+        playMenuMusic(true);
+      } else if (name === 'goToSelect' || name === 'goToManualLabSelect' || name === 'goToTournament' || name === 'goToSoloSelect') {
+        window.apexStopBattleAudio?.();
+        playMenuMusic(false);
+      }
+      callApexGlobal(name, true);
+      if (options.startsMatch || name === 'startMatch' || name === 'startSoloMode' || name === 'startTrialMode') {
+        stopMenuMusic(true);
+      }
+    } catch (error) {
+      console.warn(`[asset-loader] Failed to prepare action ${name}.`, error);
     }
   };
 
@@ -489,9 +512,10 @@ export default function App() {
     pendingActionRef.current = button.action;
     setPressedMenuButton(button.id);
     window.setTimeout(() => {
-      runApex(button.action, { startsMatch: button.startsMatch });
-      setPressedMenuButton(null);
-      pendingActionRef.current = null;
+      runApex(button.action, { startsMatch: button.startsMatch }).finally(() => {
+        setPressedMenuButton(null);
+        pendingActionRef.current = null;
+      });
     }, 105);
   };
 
