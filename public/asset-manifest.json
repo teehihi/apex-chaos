@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-27T15:17:01.496Z",
+  "generatedAt": "2026-06-29T01:58:00.297Z",
   "loadingAssets": {
     "bgPortrait": "/assets/loading/loading-bg-portrait.webp",
     "bgLandscape": "/assets/loading/loading-bg-landscape.webp",
@@ -10,7 +10,7 @@
     {
       "path": "/apexEngine.js",
       "type": "script",
-      "bytes": 1183273
+      "bytes": 239186
     },
     {
       "path": "/assets/arcade_v1/normalized/battle_idle_reference.webp",
@@ -2828,9 +2828,64 @@
       "bytes": 25854
     },
     {
+      "path": "/game/core/apexCanonicalBalance.js",
+      "type": "script",
+      "bytes": 119027
+    },
+    {
+      "path": "/game/core/apexFightTelemetry.js",
+      "type": "script",
+      "bytes": 25033
+    },
+    {
+      "path": "/game/core/apexFullRosterQa.js",
+      "type": "script",
+      "bytes": 13085
+    },
+    {
+      "path": "/game/core/apexMajorMechanicVisuals.js",
+      "type": "script",
+      "bytes": 27915
+    },
+    {
       "path": "/game/core/apexPoseLockRuntime.js",
       "type": "script",
       "bytes": 7306
+    },
+    {
+      "path": "/game/core/apexPrecisionFixes.js",
+      "type": "script",
+      "bytes": 29726
+    },
+    {
+      "path": "/game/core/apexRosterExtensions.js",
+      "type": "script",
+      "bytes": 42631
+    },
+    {
+      "path": "/game/core/apexTextHygiene.js",
+      "type": "script",
+      "bytes": 7255
+    },
+    {
+      "path": "/game/core/apexUtilityFeatures.js",
+      "type": "script",
+      "bytes": 18929
+    },
+    {
+      "path": "/game/fighters/arcadeVisualRuntime.js",
+      "type": "script",
+      "bytes": 26443
+    },
+    {
+      "path": "/game/fighters/bladeVisualRuntime.js",
+      "type": "script",
+      "bytes": 20230
+    },
+    {
+      "path": "/game/fighters/engineerRuntime.js",
+      "type": "script",
+      "bytes": 125822
     },
     {
       "path": "/game/fighters/fangRuntime.js",
@@ -2838,9 +2893,64 @@
       "bytes": 39959
     },
     {
+      "path": "/game/fighters/galaxyRefinementRuntime.js",
+      "type": "script",
+      "bytes": 60527
+    },
+    {
+      "path": "/game/fighters/galaxyRuntime.js",
+      "type": "script",
+      "bytes": 38340
+    },
+    {
+      "path": "/game/fighters/iceVisualRuntime.js",
+      "type": "script",
+      "bytes": 29885
+    },
+    {
       "path": "/game/fighters/katanaRuntime.js",
       "type": "script",
       "bytes": 92162
+    },
+    {
+      "path": "/game/fighters/musicianVisualRuntime.js",
+      "type": "script",
+      "bytes": 22312
+    },
+    {
+      "path": "/game/fighters/ninjaVisualRuntime.js",
+      "type": "script",
+      "bytes": 29681
+    },
+    {
+      "path": "/game/fighters/puppetVisualRuntime.js",
+      "type": "script",
+      "bytes": 25507
+    },
+    {
+      "path": "/game/fighters/shotgunRuntime.js",
+      "type": "script",
+      "bytes": 52605
+    },
+    {
+      "path": "/game/fighters/soccerChampionRuntime.js",
+      "type": "script",
+      "bytes": 64220
+    },
+    {
+      "path": "/game/fighters/soccerRuntime.js",
+      "type": "script",
+      "bytes": 15223
+    },
+    {
+      "path": "/game/fighters/stringHardeningRuntime.js",
+      "type": "script",
+      "bytes": 7858
+    },
+    {
+      "path": "/game/fighters/stringRuntime.js",
+      "type": "script",
+      "bytes": 72204
     },
     {
       "path": "/game/guards/apexBattleVisibilityGuard.js",
@@ -2848,14 +2958,59 @@
       "bytes": 1361
     },
     {
+      "path": "/game/guards/apexEngineerGuards.js",
+      "type": "script",
+      "bytes": 8188
+    },
+    {
+      "path": "/game/guards/apexEngineerMergeBridge.js",
+      "type": "script",
+      "bytes": 498
+    },
+    {
+      "path": "/game/guards/apexFinalMatchGuard.js",
+      "type": "script",
+      "bytes": 3708
+    },
+    {
+      "path": "/game/guards/apexFreezeDisappearHotfix.js",
+      "type": "script",
+      "bytes": 14120
+    },
+    {
+      "path": "/game/guards/apexGalaxyGuards.js",
+      "type": "script",
+      "bytes": 5634
+    },
+    {
+      "path": "/game/guards/apexRuntimeStability.js",
+      "type": "script",
+      "bytes": 2628
+    },
+    {
       "path": "/game/guards/apexShotgunLateBinder.js",
       "type": "script",
       "bytes": 1230
     },
     {
+      "path": "/game/guards/apexSlimeBodyCap.js",
+      "type": "script",
+      "bytes": 814
+    },
+    {
+      "path": "/game/modes/soloRuntime.js",
+      "type": "script",
+      "bytes": 25391
+    },
+    {
       "path": "/game/modes/tamChienRuntime.js",
       "type": "script",
       "bytes": 41795
+    },
+    {
+      "path": "/game/modes/trialRuntime.js",
+      "type": "script",
+      "bytes": 13318
     },
     {
       "path": "/game/ui/apexCharacterSelectUi.js",

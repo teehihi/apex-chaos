@@ -127,17 +127,6 @@ function warmMenuAudio() {
   return menuAudioWarmup;
 }
 
-async function loadAssetManifest() {
-  try {
-    const response = await fetch('/asset-manifest.json', { cache: 'default' });
-    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-    return await response.json();
-  } catch (error) {
-    console.warn('[asset-loader] Failed asset manifest; loading required overlay assets only.', error);
-    return { assets: [] };
-  }
-}
-
 function uniqueAssets(manifestAssets, engineSrc) {
   const assets = [
     ...manifestAssets,
@@ -170,7 +159,7 @@ function criticalBootAssets(engineSrc) {
   ];
 }
 
-function blockingBootAssets(manifestAssets, engineSrc) {
+function blockingBootAssets(engineSrc) {
   return uniqueAssets([
     ...criticalBootAssets(engineSrc),
     ...Object.values(LOADING_ASSETS).map((path) => ({ path, type: 'image', required: true })),
@@ -213,11 +202,10 @@ async function preloadAssetList(assets, onProgress) {
 }
 
 async function preloadGameAssets(engineSrc, onProgress) {
-  const manifest = await loadAssetManifest();
-  const assets = blockingBootAssets(manifest?.assets, engineSrc);
+  const assets = blockingBootAssets(engineSrc);
   await preloadAssetList(assets, onProgress);
 
-  return { totalCount: assets.length, loadedCount: assets.length, manifest };
+  return { totalCount: assets.length, loadedCount: assets.length };
 }
 
 async function waitForRuntimeAssetReadiness() {
@@ -306,6 +294,37 @@ function injectApexEngine(scriptRef, engineSrc) {
     };
     script.onload = async () => {
       try {
+        await loadRuntime('/game/core/apexMajorMechanicVisuals.js', 'apexMajorMechanicVisuals');
+        await loadRuntime('/game/fighters/shotgunRuntime.js', 'apexShotgunRuntime');
+        await loadRuntime('/game/fighters/engineerRuntime.js', 'apexEngineerRuntime');
+        await loadRuntime('/game/guards/apexEngineerMergeBridge.js', 'apexEngineerMergeBridge');
+        await loadRuntime('/game/fighters/soccerChampionRuntime.js', 'apexSoccerChampionRuntime');
+        await loadRuntime('/game/core/apexPrecisionFixes.js', 'apexPrecisionFixes');
+        await loadRuntime('/game/core/apexFullRosterQa.js', 'apexFullRosterQa');
+        await loadRuntime('/game/guards/apexFreezeDisappearHotfix.js', 'apexFreezeDisappearHotfix');
+        await loadRuntime('/game/guards/apexRuntimeStability.js', 'apexRuntimeStability');
+        await loadRuntime('/game/guards/apexSlimeBodyCap.js', 'apexSlimeBodyCap');
+        await loadRuntime('/game/core/apexCanonicalBalance.js', 'apexCanonicalBalance');
+        await loadRuntime('/game/core/apexRosterExtensions.js', 'apexRosterExtensions');
+        await loadRuntime('/game/core/apexFightTelemetry.js', 'apexFightTelemetry');
+        await loadRuntime('/game/fighters/musicianVisualRuntime.js', 'apexMusicianVisualRuntime');
+        await loadRuntime('/game/fighters/arcadeVisualRuntime.js', 'apexArcadeVisualRuntime');
+        await loadRuntime('/game/fighters/puppetVisualRuntime.js', 'apexPuppetVisualRuntime');
+        await loadRuntime('/game/fighters/bladeVisualRuntime.js', 'apexBladeVisualRuntime');
+        await loadRuntime('/game/fighters/ninjaVisualRuntime.js', 'apexNinjaVisualRuntime');
+        await loadRuntime('/game/core/apexTextHygiene.js', 'apexTextHygiene');
+        await loadRuntime('/game/fighters/iceVisualRuntime.js', 'apexIceVisualRuntime');
+        await loadRuntime('/game/modes/soloRuntime.js', 'apexSoloRuntime');
+        await loadRuntime('/game/fighters/stringRuntime.js', 'apexStringRuntime');
+        await loadRuntime('/game/modes/trialRuntime.js', 'apexTrialRuntime');
+        await loadRuntime('/game/fighters/galaxyRuntime.js', 'apexGalaxyRuntime');
+        await loadRuntime('/game/fighters/stringHardeningRuntime.js', 'apexStringHardeningRuntime');
+        await loadRuntime('/game/fighters/galaxyRefinementRuntime.js', 'apexGalaxyRefinementRuntime');
+        await loadRuntime('/game/core/apexUtilityFeatures.js', 'apexUtilityFeatures');
+        await loadRuntime('/game/fighters/soccerRuntime.js', 'apexSoccerRuntime');
+        await loadRuntime('/game/guards/apexGalaxyGuards.js', 'apexGalaxyGuards');
+        await loadRuntime('/game/guards/apexEngineerGuards.js', 'apexEngineerGuards');
+        await loadRuntime('/game/guards/apexFinalMatchGuard.js', 'apexFinalMatchGuard');
         await loadRuntime('/game/modes/tamChienRuntime.js', 'apexTamChienRuntime');
         await loadRuntime('/game/guards/apexBattleVisibilityGuard.js', 'apexBattleVisibilityGuard');
         await loadRuntime('/game/guards/apexShotgunLateBinder.js', 'apexShotgunLateBinder');
