@@ -51,16 +51,16 @@ const IMAGE_PRELOAD_TIMEOUT_MS = 7000;
 const RUNTIME_READY_TIMEOUT_MS = 4500;
 let preloadAudioContext = null;
 
-const DEFERRED_RUNTIME_ACTIONS = new Set([
-  'startMatch',
-  'startSoloMode',
-  'startTrialMode',
-  'startTamChienMode',
-  'goToSoloSelect',
-  'goToTrialSelect',
-  'goToManualLabSelect',
-  'goToTournament',
-]);
+const DEFERRED_RUNTIME_ACTION_GROUPS = {
+  startMatch: 'battle',
+  goToTournament: 'battle',
+  goToManualLabSelect: 'manualLab',
+  goToSoloSelect: 'solo',
+  startSoloMode: 'soloBattle',
+  goToTrialSelect: 'trial',
+  startTrialMode: 'trialBattle',
+  startTamChienMode: 'tamChien',
+};
 
 function callApexGlobal(name, enabled = true) {
   if (!enabled) return;
@@ -285,7 +285,7 @@ function injectApexEngine(scriptRef, engineSrc) {
         try {
           window.startMatch = function(...args) {
             const run = () => startMatch(...args);
-            const ready = window.__apexEnsureDeferredRuntimes?.();
+            const ready = window.__apexEnsureDeferredRuntimes?.('battle');
             return ready?.then ? ready.then(run) : run();
           };
         } catch (error) {}
@@ -483,8 +483,8 @@ export default function App() {
   const runApex = async (name, options = {}) => {
     if (!gameReady) return;
     try {
-      const needsDeferred = options.startsMatch || DEFERRED_RUNTIME_ACTIONS.has(name);
-      if (needsDeferred) await loadDeferredGameRuntimes();
+      const deferredGroup = options.deferredGroup || (options.startsMatch ? 'battle' : DEFERRED_RUNTIME_ACTION_GROUPS[name]);
+      if (deferredGroup) await loadDeferredGameRuntimes(deferredGroup);
       if (options.startsMatch) {
         stopMenuMusic(true);
         window.apexStopBattleAudio?.();

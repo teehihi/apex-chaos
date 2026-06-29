@@ -26,27 +26,46 @@ export const BOOT_GAME_RUNTIMES = [
   ['/game/ui/apexPickRuntime.js', 'apexPickRuntime'],
 ];
 
-export const DEFERRED_GAME_RUNTIMES = [
+export const BATTLE_DEFERRED_RUNTIMES = [
   ['/game/core/apexFightTelemetry.js', 'apexFightTelemetry'],
   ['/game/fighters/musicianVisualRuntime.js', 'apexMusicianVisualRuntime'],
   ['/game/fighters/arcadeVisualRuntime.js', 'apexArcadeVisualRuntime'],
   ['/game/fighters/puppetVisualRuntime.js', 'apexPuppetVisualRuntime'],
   ['/game/fighters/bladeVisualRuntime.js', 'apexBladeVisualRuntime'],
   ['/game/fighters/ninjaVisualRuntime.js', 'apexNinjaVisualRuntime'],
-  ['/game/modes/soloRuntime.js', 'apexSoloRuntime'],
-  ['/game/modes/trialRuntime.js', 'apexTrialRuntime'],
   ['/game/fighters/stringHardeningRuntime.js', 'apexStringHardeningRuntime'],
   ['/game/fighters/galaxyRefinementRuntime.js', 'apexGalaxyRefinementRuntime'],
   ['/game/core/apexUtilityFeatures.js', 'apexUtilityFeatures'],
   ['/game/guards/apexGalaxyGuards.js', 'apexGalaxyGuards'],
   ['/game/guards/apexEngineerGuards.js', 'apexEngineerGuards'],
   ['/game/guards/apexFinalMatchGuard.js', 'apexFinalMatchGuard'],
-  ['/game/modes/tamChienRuntime.js', 'apexTamChienRuntime'],
   ['/game/guards/apexBattleVisibilityGuard.js', 'apexBattleVisibilityGuard'],
   ['/game/guards/apexShotgunLateBinder.js', 'apexShotgunLateBinder'],
   ['/game/core/apexPoseLockRuntime.js', 'apexPoseLockRuntime'],
+];
+
+export const MODE_DEFERRED_RUNTIMES = {
+  manualLab: [
   ['/manualLab.js', 'apexManualLab'],
   ['/manualLabOnline.js', 'apexManualLabOnline', { optional: true }],
+  ],
+  solo: [
+    ['/game/modes/soloRuntime.js', 'apexSoloRuntime'],
+  ],
+  trial: [
+    ['/game/modes/trialRuntime.js', 'apexTrialRuntime'],
+  ],
+  tamChien: [
+    ['/game/modes/tamChienRuntime.js', 'apexTamChienRuntime'],
+  ],
+};
+
+export const DEFERRED_GAME_RUNTIMES = [
+  ...BATTLE_DEFERRED_RUNTIMES,
+  ...MODE_DEFERRED_RUNTIMES.manualLab,
+  ...MODE_DEFERRED_RUNTIMES.solo,
+  ...MODE_DEFERRED_RUNTIMES.trial,
+  ...MODE_DEFERRED_RUNTIMES.tamChien,
 ];
 
 export const REQUIRED_GAME_RUNTIMES = BOOT_GAME_RUNTIMES;

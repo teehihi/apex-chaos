@@ -1,6 +1,8 @@
 import {
+  BATTLE_DEFERRED_RUNTIMES,
   BOOT_GAME_RUNTIMES,
   DEFERRED_GAME_RUNTIMES,
+  MODE_DEFERRED_RUNTIMES,
   prefetchDeferredRuntimeSources,
   preloadRuntimeSources,
 } from './runtimeManifest.js';
@@ -42,18 +44,34 @@ export async function loadRequiredGameRuntimes() {
   return loadRuntimeList(BOOT_GAME_RUNTIMES);
 }
 
-export function loadDeferredGameRuntimes() {
-  if (window.__apexDeferredRuntimesPromise) return window.__apexDeferredRuntimesPromise;
+const RUNTIME_GROUPS = {
+  all: DEFERRED_GAME_RUNTIMES,
+  battle: BATTLE_DEFERRED_RUNTIMES,
+  manualLab: MODE_DEFERRED_RUNTIMES.manualLab,
+  solo: MODE_DEFERRED_RUNTIMES.solo,
+  trial: MODE_DEFERRED_RUNTIMES.trial,
+  tamChien: MODE_DEFERRED_RUNTIMES.tamChien,
+  soloBattle: [...MODE_DEFERRED_RUNTIMES.solo, ...BATTLE_DEFERRED_RUNTIMES],
+  trialBattle: [...MODE_DEFERRED_RUNTIMES.trial, ...BATTLE_DEFERRED_RUNTIMES],
+  tamChienBattle: [...MODE_DEFERRED_RUNTIMES.tamChien, ...BATTLE_DEFERRED_RUNTIMES],
+};
+
+export function loadDeferredGameRuntimes(group = 'all') {
+  const runtimes = RUNTIME_GROUPS[group] || RUNTIME_GROUPS.all;
+  const promiseKey = `__apexDeferredRuntimesPromise_${group}`;
+  if (window[promiseKey]) return window[promiseKey];
   prefetchDeferredRuntimeSources();
-  window.__apexDeferredRuntimesPromise = loadRuntimeList(DEFERRED_GAME_RUNTIMES)
+  window[promiseKey] = loadRuntimeList(runtimes)
     .then(() => {
-      window.__apexDeferredRuntimesReady = true;
+      window[`__apexDeferredRuntimesReady_${group}`] = true;
+      if (group === 'all') window.__apexDeferredRuntimesReady = true;
     })
     .catch((error) => {
-      window.__apexDeferredRuntimesPromise = null;
+      window[promiseKey] = null;
       throw error;
     });
-  return window.__apexDeferredRuntimesPromise;
+  if (group === 'all') window.__apexDeferredRuntimesPromise = window[promiseKey];
+  return window[promiseKey];
 }
 
 export function scheduleDeferredGameRuntimes() {
