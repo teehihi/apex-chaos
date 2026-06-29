@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { loadClassicRuntime, loadRequiredGameRuntimes } from './game/runtimeLoader.js';
 
 const once = { loaded: false };
 const MANUAL_ROOM_WS_URL = import.meta.env.VITE_MANUAL_ROOM_WS_URL || '';
@@ -259,15 +260,6 @@ function injectApexEngine(scriptRef, engineSrc) {
     script.src = engineSrc;
     script.async = false;
     script.dataset.apexEngine = 'true';
-    const loadRuntime = (src, dataKey) => new Promise((runtimeResolve, runtimeReject) => {
-      const runtime = document.createElement('script');
-      runtime.src = src;
-      runtime.async = false;
-      runtime.dataset[dataKey] = 'true';
-      runtime.onload = runtimeResolve;
-      runtime.onerror = () => runtimeReject(new Error(`Failed to load ${src}`));
-      document.body.appendChild(runtime);
-    });
     const finishRuntimeLoad = () => {
       const bridge = document.createElement('script');
       bridge.textContent = `
@@ -294,49 +286,10 @@ function injectApexEngine(scriptRef, engineSrc) {
     };
     script.onload = async () => {
       try {
-        await loadRuntime('/game/core/apexMajorMechanicVisuals.js', 'apexMajorMechanicVisuals');
-        await loadRuntime('/game/fighters/shotgunRuntime.js', 'apexShotgunRuntime');
-        await loadRuntime('/game/fighters/engineerRuntime.js', 'apexEngineerRuntime');
-        await loadRuntime('/game/guards/apexEngineerMergeBridge.js', 'apexEngineerMergeBridge');
-        await loadRuntime('/game/fighters/soccerChampionRuntime.js', 'apexSoccerChampionRuntime');
-        await loadRuntime('/game/core/apexPrecisionFixes.js', 'apexPrecisionFixes');
-        await loadRuntime('/game/core/apexFullRosterQa.js', 'apexFullRosterQa');
-        await loadRuntime('/game/guards/apexFreezeDisappearHotfix.js', 'apexFreezeDisappearHotfix');
-        await loadRuntime('/game/guards/apexRuntimeStability.js', 'apexRuntimeStability');
-        await loadRuntime('/game/guards/apexSlimeBodyCap.js', 'apexSlimeBodyCap');
-        await loadRuntime('/game/core/apexCanonicalBalance.js', 'apexCanonicalBalance');
-        await loadRuntime('/game/core/apexRosterExtensions.js', 'apexRosterExtensions');
-        await loadRuntime('/game/core/apexFightTelemetry.js', 'apexFightTelemetry');
-        await loadRuntime('/game/fighters/musicianVisualRuntime.js', 'apexMusicianVisualRuntime');
-        await loadRuntime('/game/fighters/arcadeVisualRuntime.js', 'apexArcadeVisualRuntime');
-        await loadRuntime('/game/fighters/puppetVisualRuntime.js', 'apexPuppetVisualRuntime');
-        await loadRuntime('/game/fighters/bladeVisualRuntime.js', 'apexBladeVisualRuntime');
-        await loadRuntime('/game/fighters/ninjaVisualRuntime.js', 'apexNinjaVisualRuntime');
-        await loadRuntime('/game/core/apexTextHygiene.js', 'apexTextHygiene');
-        await loadRuntime('/game/fighters/iceVisualRuntime.js', 'apexIceVisualRuntime');
-        await loadRuntime('/game/modes/soloRuntime.js', 'apexSoloRuntime');
-        await loadRuntime('/game/fighters/stringRuntime.js', 'apexStringRuntime');
-        await loadRuntime('/game/modes/trialRuntime.js', 'apexTrialRuntime');
-        await loadRuntime('/game/fighters/galaxyRuntime.js', 'apexGalaxyRuntime');
-        await loadRuntime('/game/fighters/stringHardeningRuntime.js', 'apexStringHardeningRuntime');
-        await loadRuntime('/game/fighters/galaxyRefinementRuntime.js', 'apexGalaxyRefinementRuntime');
-        await loadRuntime('/game/core/apexUtilityFeatures.js', 'apexUtilityFeatures');
-        await loadRuntime('/game/fighters/soccerRuntime.js', 'apexSoccerRuntime');
-        await loadRuntime('/game/guards/apexGalaxyGuards.js', 'apexGalaxyGuards');
-        await loadRuntime('/game/guards/apexEngineerGuards.js', 'apexEngineerGuards');
-        await loadRuntime('/game/guards/apexFinalMatchGuard.js', 'apexFinalMatchGuard');
-        await loadRuntime('/game/modes/tamChienRuntime.js', 'apexTamChienRuntime');
-        await loadRuntime('/game/guards/apexBattleVisibilityGuard.js', 'apexBattleVisibilityGuard');
-        await loadRuntime('/game/guards/apexShotgunLateBinder.js', 'apexShotgunLateBinder');
-        await loadRuntime('/game/fighters/katanaRuntime.js', 'apexKatanaRuntime');
-        await loadRuntime('/game/fighters/fangRuntime.js', 'apexFangRuntime');
-        await loadRuntime('/game/ui/apexCharacterSelectUi.js', 'apexCharacterSelectUi');
-        await loadRuntime('/game/ui/apexPickRuntime.js', 'apexPickRuntime');
-        await loadRuntime('/game/core/apexPoseLockRuntime.js', 'apexPoseLockRuntime');
-        await loadRuntime('/manualLab.js', 'apexManualLab');
+        await loadRequiredGameRuntimes();
         window.APEX_MANUAL_ROOM_WS_URL = MANUAL_ROOM_WS_URL;
         try {
-          await loadRuntime('/manualLabOnline.js', 'apexManualLabOnline');
+          await loadClassicRuntime('/manualLabOnline.js', 'apexManualLabOnline');
         } catch (error) {
           console.warn('[asset-loader] Failed APEX CONTROL online runtime; local control mode still works.');
         }
@@ -387,26 +340,21 @@ export default function App() {
         if (cancelled) return;
         setLoader((current) => ({
           ...current,
-          percent: progress.percent,
+          percent: Math.min(progress.percent, 99),
           status: progress.label,
           loadedCount: progress.loadedCount,
           totalCount: progress.totalCount,
         }));
       });
       if (cancelled) return;
-      setLoader((current) => ({ ...current, percent: 100, status: 'STARTING ENGINE' }));
+      setLoader((current) => ({ ...current, percent: 99, status: 'STARTING ENGINE' }));
       await enginePromise;
       await waitForRuntimeAssetReadiness();
       await waitForChampionVisualWarmup();
       if (cancelled) return;
       once.loaded = true;
       setGameReady(true);
-      await wait(350);
-      if (cancelled) return;
-      setLoader((current) => ({ ...current, fading: true, percent: 100, status: 'READY' }));
-      await wait(520);
-      if (cancelled) return;
-      setLoader((current) => ({ ...current, active: false }));
+      setLoader((current) => ({ ...current, active: false, fading: false, percent: 100, status: 'READY' }));
     };
 
     boot().catch((error) => {
