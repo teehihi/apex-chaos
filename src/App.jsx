@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { loadClassicRuntime, loadRequiredGameRuntimes } from './game/runtimeLoader.js';
+import { preloadRuntimeSources } from './game/runtimeManifest.js';
 
 const once = { loaded: false };
 const MANUAL_ROOM_WS_URL = import.meta.env.VITE_MANUAL_ROOM_WS_URL || '';
@@ -334,6 +335,7 @@ export default function App() {
 
     const boot = async () => {
       warmMenuAudio();
+      preloadRuntimeSources();
       const enginePromise = injectApexEngine(scriptRef, engineSrc);
       enginePromise.catch(() => {});
       const preloadResult = await preloadGameAssets(engineSrc, (progress) => {
