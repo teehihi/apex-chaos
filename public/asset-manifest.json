@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-29T01:58:00.297Z",
+  "generatedAt": "2026-06-30T05:09:46.869Z",
   "loadingAssets": {
     "bgPortrait": "/assets/loading/loading-bg-portrait.webp",
     "bgLandscape": "/assets/loading/loading-bg-landscape.webp",
@@ -10,7 +10,7 @@
     {
       "path": "/apexEngine.js",
       "type": "script",
-      "bytes": 239186
+      "bytes": 223988
     },
     {
       "path": "/assets/arcade_v1/normalized/battle_idle_reference.webp",
@@ -2758,6 +2758,11 @@
       "bytes": 93418
     },
     {
+      "path": "/assets/ui_2026/menu-pvp.webp",
+      "type": "image",
+      "bytes": 47414
+    },
+    {
       "path": "/assets/ui_2026/menu-saitama-test.webp",
       "type": "image",
       "bytes": 93730
@@ -2900,7 +2905,7 @@
     {
       "path": "/game/fighters/galaxyRuntime.js",
       "type": "script",
-      "bytes": 38340
+      "bytes": 38701
     },
     {
       "path": "/game/fighters/iceVisualRuntime.js",
@@ -3015,12 +3020,12 @@
     {
       "path": "/game/ui/apexCharacterSelectUi.js",
       "type": "script",
-      "bytes": 22486
+      "bytes": 22416
     },
     {
       "path": "/game/ui/apexPickRuntime.js",
       "type": "script",
-      "bytes": 31690
+      "bytes": 34415
     },
     {
       "path": "/manualLab.js",

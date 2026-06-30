@@ -45,7 +45,7 @@ const MENU_AUDIO = '/assets/audio/menu_bgm.mp3';
 
 const MENU_BUTTONS = [
   { id: 'play', label: 'Choi', asset: '/assets/ui_2026/menu-play.webp', action: 'goToSelect', primary: true },
-  { id: 'manual-lab', label: 'APEX CONTROL', text: 'APEX CONTROL', action: 'goToManualLabSelect' },
+  { id: 'manual-lab', label: 'APEX CONTROL', asset: '/assets/ui_2026/menu-pvp.webp', action: 'goToManualLabSelect' },
   { id: 'tam-chien', label: '3-Phase Battle', asset: '/assets/ui_2026/menu-3phase.webp', action: 'startTamChienMode' },
   { id: 'trial', label: 'Test Battle With Saitama', asset: '/assets/ui_2026/menu-saitama-test.webp', action: 'goToTrialSelect' },
   { id: 'giai', label: 'Tournament', asset: '/assets/ui_2026/menu-tournament.webp', action: 'goToTournament' },
