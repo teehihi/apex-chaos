@@ -59,6 +59,8 @@
     setRole(state.role);
     const start = $('manual-room-start');
     if (start) start.disabled = state.role !== 'host' || state.peers < 2;
+    const select = $('manual-room-select');
+    if (select) select.disabled = !state.room || !state.role;
     const leave = $('manual-room-leave');
     if (leave) leave.disabled = !state.connected;
   }

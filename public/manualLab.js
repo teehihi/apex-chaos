@@ -4468,6 +4468,8 @@
     if (title) { title.textContent = 'APEX CONTROL · TERRITORY MODE'; title.style.color = '#7ff8ff'; }
     const startLabel = document.querySelector('#start-btn span');
     if (startLabel) startLabel.textContent = 'CONTINUE';
+    document.getElementById('select-screen')?.classList.add('hidden');
+    document.getElementById('manual-room-screen')?.classList.remove('hidden');
   }
   function goToManualRoomLobby() {
     if (!STATE.selecting || !p1Selection || !p2Selection) return false;
@@ -4480,7 +4482,11 @@
     document.getElementById('select-screen')?.classList.remove('hidden');
   }
   function startManualLocalMatch() {
-    if (!STATE.selecting || !p1Selection || !p2Selection) return false;
+    if (!STATE.selecting) return false;
+    if (!p1Selection || !p2Selection) {
+      closeManualRoomLobby();
+      return false;
+    }
     document.getElementById('manual-room-screen')?.classList.add('hidden');
     return startSpecificMatch(p1Selection,p2Selection,{countdown:false,tournament:false,manualLab:true});
   }

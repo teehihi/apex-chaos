@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-03T16:27:07.315Z",
+  "generatedAt": "2026-07-03T16:42:44.964Z",
   "loadingAssets": {
     "bgPortrait": "/assets/loading/loading-bg-portrait.webp",
     "bgLandscape": "/assets/loading/loading-bg-landscape.webp",
@@ -3030,12 +3030,12 @@
     {
       "path": "/manualLab.js",
       "type": "script",
-      "bytes": 209993
+      "bytes": 210207
     },
     {
       "path": "/manualLabOnline.js",
       "type": "script",
-      "bytes": 9593
+      "bytes": 9699
     },
     {
       "path": "/sniper_cloak_move_sprite.webp",

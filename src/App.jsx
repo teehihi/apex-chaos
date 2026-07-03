@@ -742,9 +742,10 @@ export default function App() {
           <div id="manual-room-status" className="manual-room-status">CHAMPIONS LOCKED · CHOOSE CONNECTION</div>
           <div className="manual-room-secondary-actions">
             <button id="manual-room-copy" className="room-art-button compact" type="button"><span>COPY CODE</span></button>
-            <button id="manual-room-start" className="room-art-button compact accent" type="button" disabled><span>START ONLINE</span></button>
+            <button id="manual-room-select" className="room-art-button compact accent" type="button" disabled onClick={() => window.closeManualRoomLobby?.()}><span>SELECT CHAMPIONS</span></button>
             <button id="manual-room-leave" className="room-art-button compact danger" type="button" disabled><span>LEAVE</span></button>
           </div>
+          <button id="manual-room-start" className="room-art-button local-battle accent" type="button" disabled><span>START ONLINE</span></button>
           <div className="manual-room-divider"><span>OR</span></div>
           <button className="room-art-button local-battle" type="button" onClick={() => window.startManualLocalMatch?.()}><span>PLAY LOCAL BATTLE</span></button>
           <button className="manual-room-back" type="button" onClick={() => window.closeManualRoomLobby?.()}>← CHANGE CHAMPIONS</button>
