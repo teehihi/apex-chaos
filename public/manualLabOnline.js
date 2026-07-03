@@ -16,7 +16,11 @@
     lastError:null,
     lastSnapshotAt:0,
     lastPongAt:0,
-    heartbeatTimer:0
+    heartbeatTimer:0,
+    selectedFighters:{host:null,guest:null},
+    lockedFighters:{host:null,guest:null},
+    championLocked:false,
+    matchStarting:false
   };
 
   const $ = id => document.getElementById(id);
@@ -48,7 +52,7 @@
     const el = $('manual-room-code');
     if (el) el.textContent = code || '----';
     const input = $('manual-room-input');
-    if (input && code) input.value = code;
+    if (input) input.value = code || '';
   }
   function setRole(role) {
     const el = $('manual-room-role');
@@ -119,15 +123,25 @@
         state.room = msg.room;
         state.role = 'host';
         state.peers = 1;
+        state.lockedFighters = {host:null,guest:null};
+        state.selectedFighters = {host:null,guest:null};
+        state.championLocked = false;
+        state.matchStarting = false;
         status(`CONTROL ONLINE ${msg.room} CREATED · SEND CODE TO PLAYER 2`, 'ok');
       } else if (msg.type === 'joined') {
         state.room = msg.room;
         state.role = msg.role;
         state.peers = msg.peers || 1;
+        state.lockedFighters = {host:null,guest:null};
+        state.selectedFighters = {host:null,guest:null};
+        state.championLocked = false;
+        state.matchStarting = false;
         status(msg.role === 'guest' ? `JOINED CONTROL ${msg.room} · WAIT HOST START` : `CONTROL ROOM ${msg.room} READY`, 'ok');
+        if (state.peers >= 2) window.openManualOnlineChampionSelect?.();
       } else if (msg.type === 'peer-joined') {
         state.peers = msg.peers || 2;
-        status('PLAYER 2 CONNECTED · HOST CAN START ONLINE', 'ok');
+        status('PLAYER 2 CONNECTED · SELECTING CHAMPIONS', 'ok');
+        window.openManualOnlineChampionSelect?.();
       } else if (msg.type === 'peer-left') {
         state.peers = 1;
         lab()?.applyRemoteInput?.({held:[],pressed:[],moveVector:{x:0,y:0},pointerInside:false});
@@ -137,6 +151,38 @@
         prepareOnlineMatchAudio();
         lab()?.startNetworkMatch?.(msg.p1, msg.p2, slot, state.room);
         status(`CONTROL ONLINE STARTED · YOU ARE P${slot + 1}`, 'ok');
+      } else if (msg.type === 'fighter-select') {
+        const role = msg.from === 'guest' ? 'guest' : 'host';
+        state.selectedFighters ||= {host:null,guest:null};
+        state.selectedFighters[role] = msg.fighter || null;
+        window.apexApplyOnlineFighterSelection?.(role, msg.fighter);
+      } else if (msg.type === 'fighter-lock') {
+        const role = msg.from === 'guest' ? 'guest' : 'host';
+        state.lockedFighters[role] = msg.fighter || null;
+        window.apexApplyOnlineFighterSelection?.(role, msg.fighter);
+        maybeStartLockedMatch();
+      } else if (msg.type === 'room-destroyed') {
+        const localClosed = msg.by === state.role;
+        const destroyedBy = localClosed ? 'YOU CLOSED THE ROOM' : 'OTHER PLAYER CLOSED THE ROOM';
+        status(destroyedBy, 'error');
+        state.room = null;
+        state.role = null;
+        state.connected = false;
+        state.peers = 0;
+        state.lockedFighters = {host:null,guest:null};
+        state.selectedFighters = {host:null,guest:null};
+        state.championLocked = false;
+        state.matchStarting = false;
+        document.body.classList.remove('manual-online-select');
+        updatePanel();
+        try { state.socket?.close(); } catch {}
+        window.goToMenu?.();
+        showRoomNotice(
+          localClosed ? 'ROOM CLOSED' : 'OPPONENT LEFT THE BATTLE',
+          localClosed
+            ? 'The online battle room has been closed for both players.'
+            : 'Your opponent left the match. The online room has been closed.'
+        );
       } else if (msg.type === 'input') {
         lab()?.applyRemoteInput?.(msg.input);
       } else if (msg.type === 'snapshot') {
@@ -170,6 +216,11 @@
     state.role = null;
     state.connected = false;
     state.peers = 0;
+    state.lockedFighters = {host:null,guest:null};
+    state.selectedFighters = {host:null,guest:null};
+    state.championLocked = false;
+    state.matchStarting = false;
+    document.body.classList.remove('manual-online-select');
     updatePanel();
     status('ROOM CLOSED');
   }
@@ -191,6 +242,100 @@
     status('CONTROL ONLINE STARTED · YOU ARE P1', 'ok');
     return true;
   }
+
+  function maybeStartLockedMatch() {
+    const hostFighter = state.lockedFighters.host;
+    const guestFighter = state.lockedFighters.guest;
+    if (state.role !== 'host' || state.matchStarting || !hostFighter || !guestFighter) return false;
+    state.matchStarting = true;
+    send({type:'room-start', p1:hostFighter, p2:guestFighter});
+    prepareOnlineMatchAudio();
+    lab()?.startNetworkMatch?.(hostFighter, guestFighter, 0, state.room);
+    return true;
+  }
+
+  function lockChampion() {
+    if (!state.room || !state.role || state.peers < 2 || state.championLocked) return false;
+    const slot = state.role === 'guest' ? 2 : 1;
+    const fighter = fighterName(selectedFighter(slot));
+    if (!fighter) { status('SELECT A CHAMPION FIRST', 'error'); return false; }
+    state.championLocked = true;
+    state.lockedFighters[state.role] = fighter;
+    send({type:'fighter-lock', fighter});
+    const title = document.getElementById('select-title');
+    if (title) title.textContent = `${fighter} READY · WAITING FOR RIVAL`;
+    const button = $('start-btn');
+    if (button) {
+      button.disabled = true;
+      const label = button.querySelector('span');
+      if (label) label.textContent = 'READY ✓';
+    }
+    window.apexSyncOnlineReadyState?.();
+    maybeStartLockedMatch();
+    return true;
+  }
+  window.lockManualRoomChampion = lockChampion;
+  state.selectChampion = function selectChampion(fighter) {
+    if (!state.room || !state.role || state.peers < 2 || state.championLocked) return false;
+    state.selectedFighters ||= {host:null,guest:null};
+    state.selectedFighters[state.role] = fighter;
+    send({type:'fighter-select', fighter});
+    return true;
+  };
+
+  function destroyActiveRoom() {
+    if (!state.room) return false;
+    send({type:'destroy-room'});
+    window.setTimeout(() => {
+      if (!state.room) return;
+      const socket = state.socket;
+      state.room = null;
+      state.role = null;
+      updatePanel();
+      try { socket?.close(); } catch {}
+      window.goToMenu?.();
+    }, 450);
+    return true;
+  }
+
+  function dialogElements() {
+    return {
+      root:$('manual-room-dialog'),
+      title:$('manual-room-dialog-title'),
+      message:$('manual-room-dialog-message'),
+      confirmActions:$('manual-room-dialog-confirm-actions'),
+      noticeActions:$('manual-room-dialog-notice-actions')
+    };
+  }
+  function showRoomDestroyConfirm() {
+    if (!state.room || !lab()?.active) return false;
+    const dialog = dialogElements();
+    if (!dialog.root) return false;
+    dialog.title.textContent = 'CLOSE BATTLE ROOM?';
+    dialog.message.textContent = 'Leaving now will end the match and close the room for both players.';
+    dialog.confirmActions?.classList.remove('hidden');
+    dialog.noticeActions?.classList.add('hidden');
+    dialog.root.classList.remove('hidden');
+    return true;
+  }
+  function showRoomNotice(title, message) {
+    const dialog = dialogElements();
+    if (!dialog.root) return;
+    dialog.title.textContent = title;
+    dialog.message.textContent = message;
+    dialog.confirmActions?.classList.add('hidden');
+    dialog.noticeActions?.classList.remove('hidden');
+    dialog.root.classList.remove('hidden');
+  }
+  function hideRoomDialog() {
+    $('manual-room-dialog')?.classList.add('hidden');
+  }
+  window.cancelManualRoomDestroy = hideRoomDialog;
+  window.confirmManualRoomDestroy = function confirmManualRoomDestroy() {
+    hideRoomDialog();
+    return destroyActiveRoom();
+  };
+  window.acknowledgeManualRoomNotice = hideRoomDialog;
 
   function hookUi() {
     if (state.uiHooked) return;
@@ -221,6 +366,14 @@
   };
   try { startMatch = window.startMatch; } catch (error) {}
   Object.assign(window.apexReactBridge || {}, { startMatch:window.startMatch });
+
+  const previousExitAutoBattle = window.exitAutoBattle;
+  window.exitAutoBattle = function manualOnlineExit() {
+    if (state.room && lab()?.active) return showRoomDestroyConfirm();
+    return previousExitAutoBattle?.apply(this, arguments);
+  };
+  try { exitAutoBattle = window.exitAutoBattle; } catch (error) {}
+  Object.assign(window.apexReactBridge || {}, { exitAutoBattle:window.exitAutoBattle });
 
   let lastInputSent = 0;
   let lastInputHash = '';

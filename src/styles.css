@@ -158,8 +158,8 @@
     background-repeat: no-repeat;
     background-size: 100% 100%;
 }
-.room-art-button::before { background-image: url('/assets/online_room/button-fill.png'); inset: 10% 6%; }
-.room-art-button::after { background-image: url('/assets/online_room/button-frame.png'); }
+.room-art-button::before { background-image: url('/assets/pick_ui_final/assets/11-start-normal.webp'); }
+.room-art-button::after { display: none; }
 .room-art-button span { position: relative; z-index: 1; padding: 0 18px; }
 .room-art-button:hover:not(:disabled),
 .room-art-button:focus-visible:not(:disabled) { transform: translateY(-2px); filter: brightness(1.28) saturate(1.12); outline: none; }
@@ -5101,4 +5101,184 @@ body.manual-lab-select #select-screen:not(.hidden) #manual-room-panel {
 
 #apex-pick-runtime-root .apex-pick-frame-mask[data-player="2"] {
     background: var(--p2-accent);
+}
+
+/* Room lobby uses the canonical champion-select button set. Keep this block last:
+   legacy global button rules above must never paint a white hover background. */
+#manual-room-screen .room-art-button,
+#manual-room-screen .room-art-button:hover:not(:disabled),
+#manual-room-screen .room-art-button:focus-visible:not(:disabled),
+#manual-room-screen .room-art-button:active:not(:disabled),
+#manual-room-screen .room-art-button:disabled,
+#manual-room-screen .room-art-button:disabled:hover {
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    background: transparent !important;
+    box-shadow: none;
+    color: #f7f2e8;
+}
+
+#manual-room-screen .room-art-button::before {
+    inset: 0;
+    background-image: url('/assets/pick_ui_final/assets/11-start-normal.webp');
+    background-size: contain;
+}
+
+#manual-room-screen .room-art-button::after {
+    display: none;
+}
+
+#manual-room-screen .room-art-button:hover:not(:disabled)::before,
+#manual-room-screen .room-art-button:focus-visible:not(:disabled)::before {
+    background-image: url('/assets/pick_ui_final/assets/12-start-hover.webp');
+}
+
+#manual-room-screen .room-art-button:active:not(:disabled)::before {
+    background-image: url('/assets/pick_ui_final/assets/13-start-pressed.webp');
+}
+
+#manual-room-screen .room-art-button.danger::before {
+    background-image: url('/assets/pick_ui_final/assets/14-exit-normal.webp');
+}
+
+#manual-room-screen .room-art-button.danger:hover:not(:disabled)::before,
+#manual-room-screen .room-art-button.danger:focus-visible:not(:disabled)::before {
+    background-image: url('/assets/pick_ui_final/assets/15-exit-hover.webp');
+}
+
+#manual-room-screen .room-art-button.danger:active:not(:disabled)::before {
+    background-image: url('/assets/pick_ui_final/assets/16-exit-pressed.webp');
+}
+
+#manual-room-screen .room-art-button:hover:not(:disabled),
+#manual-room-screen .room-art-button:focus-visible:not(:disabled) {
+    color: #fff9e9;
+    transform: translateY(-2px);
+    filter: drop-shadow(0 0 14px rgba(65, 157, 255, .28));
+}
+
+#manual-room-screen .room-art-button:disabled {
+    color: rgba(184, 197, 202, .62);
+    opacity: .42;
+    filter: grayscale(.72) brightness(.7);
+}
+
+#manual-room-screen .room-art-button span {
+    text-shadow: 0 2px 4px #000, 0 0 12px rgba(70, 151, 255, .26);
+}
+
+.manual-room-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(0, 4, 8, .82);
+    backdrop-filter: blur(7px);
+}
+
+.manual-room-dialog.hidden { display: none; }
+
+.manual-room-dialog-panel {
+    width: min(560px, 92vw);
+    padding: clamp(28px, 5vw, 48px);
+    border: 1px solid rgba(91, 213, 235, .58);
+    background: linear-gradient(180deg, rgba(9, 18, 26, .98), rgba(2, 7, 12, .98));
+    box-shadow: 0 28px 80px #000, inset 0 0 36px rgba(63, 197, 225, .08), 0 0 24px rgba(42, 200, 229, .14);
+    color: #f5f0e5;
+    text-align: center;
+    font-family: 'Montserrat', 'Segoe UI', sans-serif;
+}
+
+.manual-room-dialog-kicker {
+    margin-bottom: 12px;
+    color: #68ddec;
+    font-size: .65rem;
+    letter-spacing: .24em;
+}
+
+.manual-room-dialog-panel h2 {
+    margin: 0 0 14px;
+    font-size: clamp(1.4rem, 4vw, 2.35rem);
+    letter-spacing: .06em;
+}
+
+.manual-room-dialog-panel > p:not(.manual-room-dialog-kicker) {
+    color: #9fb0b5;
+    font: 700 clamp(.78rem, 2vw, .95rem)/1.55 'Segoe UI', sans-serif;
+}
+
+.manual-room-dialog-actions {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 26px;
+}
+
+.manual-room-dialog-actions.hidden { display: none; }
+
+.manual-room-dialog-actions button {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-width: 150px;
+    min-height: 76px;
+    padding: 13px 24px;
+    border: 0;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #e9f8fa;
+    font: 900 .72rem/1 'Montserrat', sans-serif;
+    letter-spacing: .11em;
+    isolation: isolate;
+}
+
+.manual-room-dialog-actions button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: url('/assets/pick_ui_final/assets/11-start-normal.webp') center / contain no-repeat;
+}
+
+.manual-room-dialog-actions button:hover {
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.manual-room-dialog-actions button:hover::before,
+.manual-room-dialog-actions button:focus-visible::before {
+    background-image: url('/assets/pick_ui_final/assets/12-start-hover.webp');
+}
+
+.manual-room-dialog-actions button:active::before {
+    background-image: url('/assets/pick_ui_final/assets/13-start-pressed.webp');
+}
+
+.manual-room-dialog-actions button.danger {
+    background: transparent !important;
+    color: #ffd2cb;
+}
+
+.manual-room-dialog-actions button.danger::before {
+    background-image: url('/assets/pick_ui_final/assets/14-exit-normal.webp');
+}
+
+.manual-room-dialog-actions button.danger:hover::before,
+.manual-room-dialog-actions button.danger:focus-visible::before {
+    background-image: url('/assets/pick_ui_final/assets/15-exit-hover.webp');
+}
+
+.manual-room-dialog-actions button.danger:active::before {
+    background-image: url('/assets/pick_ui_final/assets/16-exit-pressed.webp');
+}
+
+#apex-pick-runtime-root .apex-pick-stage.online-ready-locked .apex-pick-card,
+#apex-pick-runtime-root .apex-pick-stage.online-ready-locked .apex-pick-button[aria-label="arrow-left"],
+#apex-pick-runtime-root .apex-pick-stage.online-ready-locked .apex-pick-button[aria-label="arrow-right"] {
+    pointer-events: none;
+    cursor: not-allowed;
+    filter: saturate(.45) brightness(.72);
 }

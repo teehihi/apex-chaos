@@ -103,6 +103,18 @@ export function createManualRoomRelay() {
     client.room = null;
     client.mode = null;
   };
+  const destroyRoom = (client) => {
+    if (!client.room || !rooms.has(client.room)) return;
+    const code = client.room;
+    const room = roomRecord(code);
+    const set = roomPeers(room);
+    for (const peer of set) send(peer, {type:'room-destroyed', room:code, by:client.role, mode:roomMode(room)});
+    rooms.delete(code);
+    for (const peer of set) {
+      peer.room = null;
+      peer.mode = null;
+    }
+  };
   const joinRoom = (client, code, role, expectedMode = DEFAULT_ROOM_MODE) => {
     const room = rooms.get(code);
     if (!room) return send(client, { type:'error', reason:'ROOM NOT FOUND' });
@@ -159,8 +171,9 @@ export function createManualRoomRelay() {
             const set = roomPeers(room);
             const peerCount = set ? set.size : 0;
             send(client, { type:'pong', t:message.t, room:client.room, mode:client.mode || roomMode(room), peers:peerCount });
-          } else if (['room-start', 'input', 'snapshot', 'chat', 'leave'].includes(message.type)) {
+          } else if (['room-start', 'fighter-select', 'fighter-lock', 'input', 'snapshot', 'chat', 'leave', 'destroy-room'].includes(message.type)) {
             if (message.type === 'leave') leave(client);
+            else if (message.type === 'destroy-room') destroyRoom(client);
             else relay(client, { ...message, from:client.role, room:client.room, mode:client.mode || message.mode || DEFAULT_ROOM_MODE });
           }
         });

@@ -12,7 +12,10 @@ import {
 } from './game/performanceMetrics.js';
 
 const once = { loaded: false };
-const MANUAL_ROOM_WS_URL = import.meta.env.VITE_MANUAL_ROOM_WS_URL || '';
+const RAW_MANUAL_ROOM_WS_URL = String(import.meta.env.VITE_MANUAL_ROOM_WS_URL || '').trim();
+const MANUAL_ROOM_WS_URL = /(^|\.)example\.com(?=\/|$)/i.test(RAW_MANUAL_ROOM_WS_URL.replace(/^wss?:\/\//i, ''))
+  ? ''
+  : RAW_MANUAL_ROOM_WS_URL;
 
 function wakeManualRoomRelay() {
   if (!MANUAL_ROOM_WS_URL) return;
@@ -602,6 +605,21 @@ export default function App() {
         <button type="button" disabled={!gameReady} onClick={() => runApex('exitAutoBattle')} aria-label="Exit">X</button>
       </div>
 
+      <div id="manual-room-dialog" className="manual-room-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="manual-room-dialog-title">
+        <div className="manual-room-dialog-panel">
+          <p className="manual-room-dialog-kicker">APEX CONTROL · ONLINE</p>
+          <h2 id="manual-room-dialog-title">CLOSE BATTLE ROOM?</h2>
+          <p id="manual-room-dialog-message">Leaving now will close the room for both players.</p>
+          <div id="manual-room-dialog-confirm-actions" className="manual-room-dialog-actions">
+            <button type="button" onClick={() => window.cancelManualRoomDestroy?.()}>CANCEL</button>
+            <button className="danger" type="button" onClick={() => window.confirmManualRoomDestroy?.()}>CLOSE ROOM</button>
+          </div>
+          <div id="manual-room-dialog-notice-actions" className="manual-room-dialog-actions hidden">
+            <button type="button" onClick={() => window.acknowledgeManualRoomNotice?.()}>OK</button>
+          </div>
+        </div>
+      </div>
+
       <div id="menu-screen" className="screen">
         <div className="menu-bg menu-bg-landscape" aria-hidden="true" />
         <div className="menu-bg menu-bg-portrait" aria-hidden="true" />
@@ -683,7 +701,7 @@ export default function App() {
                 </div>
               </div>
               <div className="select-actions">
-                <button id="start-btn" className="fight-stage-button hidden" type="button" disabled={!gameReady} onClick={() => document.body.classList.contains('manual-lab-select') ? window.goToManualRoomLobby?.() : runApex('startMatch')}>
+                <button id="start-btn" className="fight-stage-button hidden" type="button" disabled={!gameReady} onClick={() => document.body.classList.contains('manual-online-select') ? window.lockManualRoomChampion?.() : document.body.classList.contains('manual-lab-select') ? window.goToManualRoomLobby?.() : runApex('startMatch')}>
                   <span>START BATTLE</span>
                 </button>
                 <button id="select-exit-btn" type="button" disabled={!gameReady} onClick={() => runApex('goToMenu')}>

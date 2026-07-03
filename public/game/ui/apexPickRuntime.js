@@ -335,6 +335,10 @@
     if (layer.id === 'arrow-left') btn.addEventListener('click', () => setFocusedIndex(PickRuntimeController.centerIndex - 1));
     if (layer.id === 'arrow-right') btn.addEventListener('click', () => setFocusedIndex(PickRuntimeController.centerIndex + 1));
     if (layer.id === 'start-button') btn.addEventListener('click', () => {
+      if (document.body.classList.contains('manual-online-select')) {
+        window.lockManualRoomChampion?.();
+        return;
+      }
       if (PickRuntimeController.p1ChampionId && PickRuntimeController.p2ChampionId) {
         window.apexStopMenuMusic?.(true);
         syncHiddenMatchSettings();
@@ -603,6 +607,7 @@
     stage.style.transform = `translate(${left}px, ${top}px) scale(${scale})`;
   }
   function setFocusedIndex(nextIndex) {
+    if (document.body.classList.contains('manual-online-select') && window.APEX_MANUAL_LAB_ONLINE?.championLocked) return;
     const roster = currentRoster();
     if (!roster.length) return;
     carouselTouched = true;
@@ -635,6 +640,29 @@
     if (!ft) return;
     carouselTouched = true;
     PickRuntimeController.centerIndex = currentRoster().findIndex(item => item.name === champ.name);
+    if (document.body.classList.contains('manual-online-select')) {
+      const onlineState = window.APEX_MANUAL_LAB_ONLINE;
+      if (onlineState?.championLocked) return;
+      const role = onlineState?.role;
+      const player = role === 'guest' ? 2 : 1;
+      if (player === 2) {
+        PickRuntimeController.p2ChampionId = champ.id;
+        p2Selection = ft;
+      } else {
+        PickRuntimeController.p1ChampionId = champ.id;
+        p1Selection = ft;
+      }
+      PickRuntimeController.activePlayer = player;
+      renderCards();
+      syncPickState();
+      window.APEX_MANUAL_LAB_ONLINE?.selectChampion?.(ft.name);
+      const ready = document.getElementById('start-btn');
+      ready?.classList.remove('hidden');
+      if (ready) ready.disabled = false;
+      const title = document.getElementById('select-title');
+      if (title) title.textContent = `P${player} · ${ft.name} SELECTED`;
+      return;
+    }
     if (PickRuntimeController.activePlayer === 1) {
       PickRuntimeController.p1ChampionId = champ.id;
       p1Selection = ft;
@@ -693,9 +721,24 @@
     if (p2Champ) syncPlayerPanel(2, p2Champ);
     else syncEmptyPlayerPanel(2);
     syncHiddenMatchSettings();
-    setLayerText('title', PickRuntimeController.activePlayer === 1 ? 'SELECT PLAYER 1' : PickRuntimeController.activePlayer === 2 ? 'SELECT PLAYER 2' : 'READY TO FIGHT');
+    const onlineState = document.body.classList.contains('manual-online-select') ? window.APEX_MANUAL_LAB_ONLINE : null;
+    const onlinePlayer = onlineState?.role === 'guest' ? 2 : 1;
+    const onlineLocalChampionId = onlinePlayer === 2 ? PickRuntimeController.p2ChampionId : PickRuntimeController.p1ChampionId;
+    setLayerText('title', onlineState ? `SELECT PLAYER ${onlinePlayer}` : PickRuntimeController.activePlayer === 1 ? 'SELECT PLAYER 1' : PickRuntimeController.activePlayer === 2 ? 'SELECT PLAYER 2' : 'READY TO FIGHT');
     const start = refs.get('start-button');
-    if (start) start.disabled = !(PickRuntimeController.p1ChampionId && PickRuntimeController.p2ChampionId);
+    if (onlineState) {
+      setLayerText('start-label', onlineState.championLocked ? 'READY ✓' : 'READY');
+      if (start) start.disabled = !onlineLocalChampionId || onlineState.championLocked;
+      refs.get('arrow-left')?.toggleAttribute('disabled', !!onlineState.championLocked);
+      refs.get('arrow-right')?.toggleAttribute('disabled', !!onlineState.championLocked);
+      stage?.classList.toggle('online-ready-locked', !!onlineState.championLocked);
+    } else {
+      setLayerText('start-label', 'START BATTLE');
+      if (start) start.disabled = !(PickRuntimeController.p1ChampionId && PickRuntimeController.p2ChampionId);
+      refs.get('arrow-left')?.removeAttribute('disabled');
+      refs.get('arrow-right')?.removeAttribute('disabled');
+      stage?.classList.remove('online-ready-locked');
+    }
     stage?.querySelectorAll('.apex-pick-card').forEach(card => {
       const selected = [p1Champ?.name, p2Champ?.name].includes(card.dataset.champion);
       card.classList.toggle('is-selected', selected);
@@ -804,6 +847,23 @@
     if (champ) confirmChampion(champ);
     return ft;
   };
+
+  window.apexApplyOnlineFighterSelection = function(role, fighterName) {
+    const champ = currentRoster().find(item => item.name === fighterName);
+    const ft = champ && fighterForChampion(champ);
+    if (!champ || !ft) return false;
+    if (role === 'guest') {
+      PickRuntimeController.p2ChampionId = champ.id;
+      p2Selection = ft;
+    } else {
+      PickRuntimeController.p1ChampionId = champ.id;
+      p1Selection = ft;
+    }
+    renderCards();
+    syncPickState();
+    return true;
+  };
+  window.apexSyncOnlineReadyState = syncPickState;
 
   const legacyGoToSelectJsonPick = goToSelect;
   goToSelect = function(...args) {

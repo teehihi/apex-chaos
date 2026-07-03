@@ -4431,6 +4431,7 @@
     STATE.room = room || STATE.room || null;
     STATE.localSlot = slot === 1 ? 1 : 0;
     STATE.remoteSlot = STATE.localSlot === 0 ? 1 : 0;
+    document.body.classList.remove('manual-online-select');
     document.getElementById('manual-room-screen')?.classList.add('hidden');
     startSpecificMatch(ft1, ft2, {countdown:false,tournament:false,trial:false,manualLab:true,localSlot:STATE.localSlot,remoteSlot:STATE.remoteSlot,networkRoom:STATE.room});
     return true;
@@ -4481,6 +4482,21 @@
     document.getElementById('manual-room-screen')?.classList.add('hidden');
     document.getElementById('select-screen')?.classList.remove('hidden');
   }
+  function openManualOnlineChampionSelect() {
+    if (!STATE.selecting) return false;
+    document.body.classList.add('manual-online-select');
+    document.getElementById('manual-room-screen')?.classList.add('hidden');
+    document.getElementById('select-screen')?.classList.remove('hidden');
+    const role = window.APEX_MANUAL_LAB_ONLINE?.role;
+    const player = role === 'guest' ? 2 : 1;
+    const title = document.getElementById('select-title');
+    if (title) { title.textContent = `PLAYER ${player} · SELECT YOUR CHAMPION`; title.style.color = player === 2 ? '#ff7ac8' : '#70d9ff'; }
+    const startLabel = document.querySelector('#start-btn span');
+    if (startLabel) startLabel.textContent = 'READY';
+    document.getElementById('start-btn')?.classList.add('hidden');
+    window.apexSyncOnlineReadyState?.();
+    return true;
+  }
   function startManualLocalMatch() {
     if (!STATE.selecting) return false;
     if (!p1Selection || !p2Selection) {
@@ -4492,10 +4508,12 @@
   }
   window.goToManualRoomLobby = goToManualRoomLobby;
   window.closeManualRoomLobby = closeManualRoomLobby;
+  window.openManualOnlineChampionSelect = openManualOnlineChampionSelect;
   window.startManualLocalMatch = startManualLocalMatch;
   const previousGoToMenuManualLab = goToMenu;
   goToMenu = function() {
     deactivate(true);
+    document.body.classList.remove('manual-online-select');
     document.getElementById('manual-room-screen')?.classList.add('hidden');
     return previousGoToMenuManualLab();
   };

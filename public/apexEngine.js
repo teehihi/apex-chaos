@@ -2620,6 +2620,23 @@ function syncSelectedFighterVfx() {
     });
 }
 function selectFighter(ft, card) {
+    if (document.body.classList.contains('manual-online-select')) {
+        const onlineState = window.APEX_MANUAL_LAB_ONLINE;
+        const player = onlineState?.role === 'guest' ? 2 : 1;
+        const selectedClass = player === 2 ? 'selected-p2' : 'selected-p1';
+        document.querySelectorAll(`#roster-grid .fighter-card.${selectedClass}`).forEach(node => node.classList.remove(selectedClass));
+        if (player === 2) { p1Selection = null; p2Selection = ft; }
+        else { p1Selection = ft; p2Selection = null; }
+        card.classList.add(selectedClass);
+        const lockButton = document.getElementById('start-btn');
+        lockButton.classList.remove('hidden');
+        lockButton.disabled = false;
+        document.getElementById('select-title').innerText = `P${player} · LOCK ${ft.name}`;
+        document.getElementById('select-title').style.color = player === 2 ? '#ff7ac8' : '#70d9ff';
+        syncSelectedFighterVfx();
+        window.APEX_MANUAL_LAB_ONLINE?.selectChampion?.(ft.name);
+        return;
+    }
     if (!p1Selection) {
         p1Selection = ft;
         card.classList.add('selected-p1');
@@ -2634,6 +2651,18 @@ function selectFighter(ft, card) {
     }
     syncSelectedFighterVfx();
 }
+window.apexApplyOnlineFighterSelection = function(role, fighterName) {
+    const ft = fighterTypeByName(String(fighterName || ''));
+    if (!ft) return false;
+    const player = role === 'guest' ? 2 : 1;
+    const selectedClass = player === 2 ? 'selected-p2' : 'selected-p1';
+    document.querySelectorAll(`#roster-grid .fighter-card.${selectedClass}`).forEach(node => node.classList.remove(selectedClass));
+    if (player === 2) p2Selection = ft;
+    else p1Selection = ft;
+    document.querySelector(`#roster-grid .fighter-card[data-fighter="${ft.name}"]`)?.classList.add(selectedClass);
+    syncSelectedFighterVfx();
+    return true;
+};
 function goToSelect() {
     stopBattleAudio();
     autoBattlePaused = false;
