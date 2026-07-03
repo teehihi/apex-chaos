@@ -4431,6 +4431,7 @@
     STATE.room = room || STATE.room || null;
     STATE.localSlot = slot === 1 ? 1 : 0;
     STATE.remoteSlot = STATE.localSlot === 0 ? 1 : 0;
+    document.getElementById('manual-room-screen')?.classList.add('hidden');
     startSpecificMatch(ft1, ft2, {countdown:false,tournament:false,trial:false,manualLab:true,localSlot:STATE.localSlot,remoteSlot:STATE.remoteSlot,networkRoom:STATE.room});
     return true;
   }
@@ -4465,10 +4466,31 @@
     document.body.classList.add('manual-lab-select');
     const title = document.getElementById('select-title');
     if (title) { title.textContent = 'APEX CONTROL · TERRITORY MODE'; title.style.color = '#7ff8ff'; }
+    const startLabel = document.querySelector('#start-btn span');
+    if (startLabel) startLabel.textContent = 'CONTINUE';
   }
+  function goToManualRoomLobby() {
+    if (!STATE.selecting || !p1Selection || !p2Selection) return false;
+    document.getElementById('select-screen')?.classList.add('hidden');
+    document.getElementById('manual-room-screen')?.classList.remove('hidden');
+    return true;
+  }
+  function closeManualRoomLobby() {
+    document.getElementById('manual-room-screen')?.classList.add('hidden');
+    document.getElementById('select-screen')?.classList.remove('hidden');
+  }
+  function startManualLocalMatch() {
+    if (!STATE.selecting || !p1Selection || !p2Selection) return false;
+    document.getElementById('manual-room-screen')?.classList.add('hidden');
+    return startSpecificMatch(p1Selection,p2Selection,{countdown:false,tournament:false,manualLab:true});
+  }
+  window.goToManualRoomLobby = goToManualRoomLobby;
+  window.closeManualRoomLobby = closeManualRoomLobby;
+  window.startManualLocalMatch = startManualLocalMatch;
   const previousGoToMenuManualLab = goToMenu;
   goToMenu = function() {
     deactivate(true);
+    document.getElementById('manual-room-screen')?.classList.add('hidden');
     return previousGoToMenuManualLab();
   };
   const previousEndMatchManualLab = endMatch;

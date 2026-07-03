@@ -25,6 +25,212 @@
     overflow: hidden;
 }
 
+/* APEX Control: dedicated versus-room page */
+#manual-room-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 24;
+    width: 100vw;
+    height: 100dvh;
+    overflow: hidden;
+    place-items: center;
+    isolation: isolate;
+    background: #020509;
+    font-family: 'Montserrat', 'Segoe UI', sans-serif;
+}
+
+#manual-room-screen:not(.hidden) { display: grid; }
+
+#manual-room-screen .manual-room-bg {
+    position: absolute;
+    inset: -3%;
+    z-index: -3;
+    background:
+        radial-gradient(circle at 50% 44%, rgba(13, 117, 143, .26), transparent 32%),
+        linear-gradient(90deg, rgba(1, 5, 10, .84), rgba(1, 5, 10, .24) 50%, rgba(1, 5, 10, .84)),
+        url('/assets/ui_2026/fighter-pick-bg.webp') center / cover no-repeat;
+    filter: saturate(.72) contrast(1.12) brightness(.72);
+    transform: scale(1.04);
+}
+
+#manual-room-screen .manual-room-scanlines {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+        linear-gradient(180deg, rgba(0,0,0,.72), transparent 18%, transparent 82%, rgba(0,0,0,.82)),
+        repeating-linear-gradient(180deg, transparent 0 3px, rgba(111, 238, 255, .025) 4px);
+}
+
+#manual-room-screen .manual-room-panel {
+    position: relative;
+    inset: auto;
+    transform: none;
+    display: grid;
+    width: min(880px, 92vw);
+    padding: clamp(26px, 4vh, 52px) clamp(24px, 5vw, 72px) clamp(22px, 3.5vh, 42px);
+    border: 1px solid rgba(99, 226, 244, .42);
+    border-radius: 2px;
+    background:
+        linear-gradient(135deg, transparent 18px, rgba(5, 12, 18, .96) 0) top left,
+        linear-gradient(-135deg, transparent 18px, rgba(5, 12, 18, .96) 0) top right,
+        linear-gradient(45deg, transparent 18px, rgba(5, 12, 18, .96) 0) bottom left,
+        linear-gradient(-45deg, transparent 18px, rgba(5, 12, 18, .96) 0) bottom right;
+    background-size: 51% 51%;
+    background-repeat: no-repeat;
+    box-shadow: 0 30px 90px rgba(0,0,0,.72), inset 0 0 60px rgba(42, 204, 233, .055), 0 0 32px rgba(27, 205, 233, .11);
+    color: #eafcff;
+    letter-spacing: .08em;
+}
+
+#manual-room-screen .manual-room-panel::before,
+#manual-room-screen .manual-room-panel::after {
+    content: '';
+    position: absolute;
+    left: 7%;
+    right: 7%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #40d9ed 18%, #d9b96c 50%, #40d9ed 82%, transparent);
+    box-shadow: 0 0 12px rgba(64,217,237,.58);
+}
+#manual-room-screen .manual-room-panel::before { top: 0; }
+#manual-room-screen .manual-room-panel::after { bottom: 0; }
+
+#manual-room-screen .manual-room-kicker {
+    margin: 0 0 8px;
+    color: #61def0;
+    text-align: center;
+    font-size: clamp(.58rem, 1.25vw, .76rem);
+    letter-spacing: .3em;
+}
+
+#manual-room-screen .manual-room-title {
+    margin: 0;
+    color: #f6f0df;
+    text-align: center;
+    font-size: clamp(2rem, 5vw, 4.4rem);
+    line-height: .96;
+    letter-spacing: .055em;
+    text-shadow: 0 3px 0 #101820, 0 0 24px rgba(74,221,239,.2);
+}
+
+#manual-room-screen .manual-room-subtitle {
+    margin: 12px 0 clamp(20px, 3.5vh, 34px);
+    color: rgba(214,231,233,.66);
+    text-align: center;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: clamp(.7rem, 1.5vw, .9rem);
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+#manual-room-screen .manual-room-primary-actions {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(150px, .72fr) minmax(180px, 1fr);
+    align-items: center;
+    gap: clamp(10px, 2vw, 20px);
+}
+
+.room-art-button {
+    position: relative;
+    display: grid;
+    min-width: 0;
+    min-height: 76px;
+    place-items: center;
+    border: 0;
+    background: transparent;
+    color: #f8f1dc;
+    cursor: pointer;
+    font: 900 clamp(.72rem, 1.45vw, 1rem)/1 'Montserrat', 'Segoe UI', sans-serif;
+    letter-spacing: .12em;
+    text-shadow: 0 2px 3px #000, 0 0 12px rgba(108,229,244,.2);
+    transition: transform .14s ease, filter .14s ease, opacity .14s ease;
+}
+
+.room-art-button::before,
+.room-art-button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+}
+.room-art-button::before { background-image: url('/assets/online_room/button-fill.png'); inset: 10% 6%; }
+.room-art-button::after { background-image: url('/assets/online_room/button-frame.png'); }
+.room-art-button span { position: relative; z-index: 1; padding: 0 18px; }
+.room-art-button:hover:not(:disabled),
+.room-art-button:focus-visible:not(:disabled) { transform: translateY(-2px); filter: brightness(1.28) saturate(1.12); outline: none; }
+.room-art-button:active:not(:disabled) { transform: translateY(1px) scale(.985); filter: brightness(.9); }
+.room-art-button:disabled { cursor: not-allowed; opacity: .34; filter: grayscale(.55); }
+.room-art-button.accent { color: #9af4ff; }
+.room-art-button.danger { color: #ffb1a4; }
+.room-art-button.compact { min-height: 60px; font-size: clamp(.6rem, 1.1vw, .78rem); }
+.room-art-button.local-battle { width: min(350px, 100%); margin: 4px auto 0; }
+
+#manual-room-screen .manual-room-code-entry {
+    display: grid;
+    gap: 7px;
+    justify-items: center;
+}
+#manual-room-screen .manual-room-code-entry label { color: #6ed9e8; font-size: .58rem; letter-spacing: .22em; }
+#manual-room-screen #manual-room-input {
+    width: 100%;
+    height: 56px;
+    border: 1px solid rgba(111,225,239,.42);
+    border-radius: 0;
+    outline: 1px solid rgba(0,0,0,.9);
+    outline-offset: -5px;
+    background: linear-gradient(180deg, rgba(2,8,13,.96), rgba(11,23,30,.9));
+    box-shadow: inset 0 0 22px rgba(43,197,221,.08), 0 0 14px rgba(39,197,222,.08);
+    color: #f6dd93;
+    text-align: center;
+    text-transform: uppercase;
+    font: 900 clamp(1.15rem, 2.4vw, 1.7rem)/1 'Montserrat', sans-serif;
+    letter-spacing: .22em;
+}
+
+#manual-room-screen .manual-room-readout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(14px, 3vw, 32px);
+    margin: clamp(16px, 2.5vh, 25px) 0 8px;
+    color: #8ba3a7;
+    font-size: clamp(.58rem, 1.2vw, .75rem);
+}
+#manual-room-screen .manual-room-readout b { margin-left: 7px; color: #f3d887; }
+#manual-room-screen .manual-room-readout i { width: 1px; height: 18px; background: rgba(102,214,229,.26); }
+#manual-room-screen .manual-room-status { margin: 7px 0 12px; font-size: clamp(.62rem, 1.25vw, .78rem); }
+#manual-room-screen .manual-room-secondary-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(7px, 1.4vw, 14px); }
+#manual-room-screen .manual-room-divider { display: flex; align-items: center; gap: 12px; color: #647b7e; font-size: .58rem; }
+#manual-room-screen .manual-room-divider::before,
+#manual-room-screen .manual-room-divider::after { content: ''; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(99,205,220,.3)); }
+#manual-room-screen .manual-room-divider::after { transform: scaleX(-1); }
+#manual-room-screen .manual-room-back {
+    justify-self: center;
+    margin-top: 10px;
+    border: 0;
+    background: transparent;
+    color: #7f9da1;
+    cursor: pointer;
+    font: 900 .62rem/1 'Montserrat', sans-serif;
+    letter-spacing: .13em;
+}
+#manual-room-screen .manual-room-back:hover { color: #b7f4fb; }
+
+@media (max-width: 680px), (orientation: portrait) {
+    #manual-room-screen { overflow-y: auto; padding: 16px 0; }
+    #manual-room-screen .manual-room-panel { width: min(94vw, 520px); padding: 24px 18px; }
+    #manual-room-screen .manual-room-primary-actions { grid-template-columns: 1fr; }
+    #manual-room-screen .manual-room-code-entry { grid-row: 1; }
+    #manual-room-screen .manual-room-secondary-actions { grid-template-columns: 1fr; }
+    .room-art-button { min-height: 66px; }
+    #manual-room-screen .manual-room-readout { flex-wrap: wrap; }
+}
+
 #select-screen .select-bg {
     position: fixed;
     inset: 0;
@@ -85,7 +291,7 @@
 }
 
 body.manual-lab-select .manual-room-panel {
-    display: block;
+    display: grid;
 }
 
 .manual-room-title {

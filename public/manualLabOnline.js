@@ -58,7 +58,7 @@
     setCode(state.room);
     setRole(state.role);
     const start = $('manual-room-start');
-    if (start) start.disabled = state.role !== 'host';
+    if (start) start.disabled = state.role !== 'host' || state.peers < 2;
     const leave = $('manual-room-leave');
     if (leave) leave.disabled = !state.connected;
   }

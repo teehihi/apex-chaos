@@ -14,6 +14,25 @@ import {
 const once = { loaded: false };
 const MANUAL_ROOM_WS_URL = import.meta.env.VITE_MANUAL_ROOM_WS_URL || '';
 
+function wakeManualRoomRelay() {
+  if (!MANUAL_ROOM_WS_URL) return;
+  try {
+    const relayUrl = new URL(MANUAL_ROOM_WS_URL);
+    relayUrl.protocol = relayUrl.protocol === 'wss:' ? 'https:' : 'http:';
+    relayUrl.pathname = '/health';
+    relayUrl.search = '';
+    relayUrl.hash = '';
+    fetch(relayUrl.toString(), {
+      method: 'GET',
+      mode: 'no-cors',
+      cache: 'no-store',
+      keepalive: true,
+    }).catch(() => {});
+  } catch (error) {
+    console.warn('[manual-room] Invalid VITE_MANUAL_ROOM_WS_URL; relay wake-up skipped.');
+  }
+}
+
 const LOADING_ASSETS = {
   bgPortrait: '/assets/ui_2026/loading-bg-portrait.webp',
   bgLandscape: '/assets/ui_2026/loading-bg-landscape.webp',
@@ -317,6 +336,8 @@ export default function App() {
     let cancelled = false;
     const engineSrc = '/apexEngine.js';
 
+    wakeManualRoomRelay();
+
     const boot = async () => {
       markBootPhase('boot-start');
       preloadRuntimeSources();
@@ -374,6 +395,7 @@ export default function App() {
     };
     return visible('menu-screen')
       || visible('select-screen')
+      || visible('manual-room-screen')
       || visible('tournament-screen')
       || visible('solo-screen')
       || visible('solo-select-screen')
@@ -615,25 +637,6 @@ export default function App() {
         <div className="select-bg" aria-hidden="true" />
         <div id="select-ui">
           <div className="select-loading-panel" aria-live="polite">LOADING SELECT UI</div>
-          <div id="manual-room-panel" className="manual-room-panel" aria-live="polite">
-            <div className="manual-room-title">APEX CONTROL ONLINE</div>
-            <div className="manual-room-row">
-              <button id="manual-room-create" type="button">CREATE ROOM</button>
-              <input id="manual-room-input" type="text" maxLength={4} placeholder="CODE" spellCheck="false" />
-              <button id="manual-room-join" type="button">JOIN ROOM</button>
-            </div>
-            <div className="manual-room-row">
-              <span>CODE <b id="manual-room-code">----</b></span>
-              <span>ROLE <b id="manual-room-role">OFFLINE</b></span>
-            </div>
-            <div className="manual-room-row">
-              <button id="manual-room-copy" type="button">COPY CODE</button>
-              <button id="manual-room-start" type="button" disabled>START ONLINE</button>
-              <button id="manual-room-leave" type="button" disabled>LEAVE</button>
-            </div>
-            <div id="manual-room-status" className="manual-room-status">LOCAL CONTROL OR ONLINE ROOM</div>
-            <div className="manual-room-hint">Same APEX CONTROL gameplay, VFX and audio · room code only adds realtime online.</div>
-          </div>
           <div className="fighter-stage" aria-label="Selected fighters">
             <h2 id="select-title">SELECT PLAYER 1</h2>
             <div id="select-phase-label">P1 SELECTING</div>
@@ -680,7 +683,7 @@ export default function App() {
                 </div>
               </div>
               <div className="select-actions">
-                <button id="start-btn" className="fight-stage-button hidden" type="button" disabled={!gameReady} onClick={() => runApex('startMatch')}>
+                <button id="start-btn" className="fight-stage-button hidden" type="button" disabled={!gameReady} onClick={() => document.body.classList.contains('manual-lab-select') ? window.goToManualRoomLobby?.() : runApex('startMatch')}>
                   <span>START BATTLE</span>
                 </button>
                 <button id="select-exit-btn" type="button" disabled={!gameReady} onClick={() => runApex('goToMenu')}>
@@ -711,6 +714,41 @@ export default function App() {
           </div>
           <div id="matchup-report" className="matchup-report" />
         </div>
+      </div>
+
+      <div id="manual-room-screen" className="screen hidden" aria-label="APEX Control room lobby">
+        <div className="manual-room-bg" aria-hidden="true" />
+        <div className="manual-room-scanlines" aria-hidden="true" />
+        <section id="manual-room-panel" className="manual-room-panel" aria-live="polite">
+          <p className="manual-room-kicker">APEX CONTROL · VERSUS LINK</p>
+          <h2 className="manual-room-title">BATTLE ROOM</h2>
+          <p className="manual-room-subtitle">Create a private link or enter your rival's access code.</p>
+
+          <div className="manual-room-primary-actions">
+            <button id="manual-room-create" className="room-art-button" type="button"><span>CREATE ROOM</span></button>
+            <div className="manual-room-code-entry">
+              <label htmlFor="manual-room-input">ROOM CODE</label>
+              <input id="manual-room-input" type="text" maxLength={4} placeholder="----" spellCheck="false" aria-label="Room code" />
+            </div>
+            <button id="manual-room-join" className="room-art-button" type="button"><span>JOIN ROOM</span></button>
+          </div>
+
+          <div className="manual-room-readout">
+            <span>ACCESS CODE <b id="manual-room-code">----</b></span>
+            <i aria-hidden="true" />
+            <span>LINK ROLE <b id="manual-room-role">OFFLINE</b></span>
+          </div>
+
+          <div id="manual-room-status" className="manual-room-status">CHAMPIONS LOCKED · CHOOSE CONNECTION</div>
+          <div className="manual-room-secondary-actions">
+            <button id="manual-room-copy" className="room-art-button compact" type="button"><span>COPY CODE</span></button>
+            <button id="manual-room-start" className="room-art-button compact accent" type="button" disabled><span>START ONLINE</span></button>
+            <button id="manual-room-leave" className="room-art-button compact danger" type="button" disabled><span>LEAVE</span></button>
+          </div>
+          <div className="manual-room-divider"><span>OR</span></div>
+          <button className="room-art-button local-battle" type="button" onClick={() => window.startManualLocalMatch?.()}><span>PLAY LOCAL BATTLE</span></button>
+          <button className="manual-room-back" type="button" onClick={() => window.closeManualRoomLobby?.()}>← CHANGE CHAMPIONS</button>
+        </section>
       </div>
 
       <div id="tournament-screen" className="screen hidden">
