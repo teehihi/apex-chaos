@@ -2109,9 +2109,18 @@ function drawTimeArenaClock(ctx) {
     ctx.restore();
 }
 
+var cachedArenaBackground = null, cachedArenaBackgroundSize = 0;
+function staticArenaBackground() {
+    if (cachedArenaBackground && cachedArenaBackgroundSize === GAME_SIZE) return cachedArenaBackground;
+    const surface = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(GAME_SIZE, GAME_SIZE) : Object.assign(document.createElement('canvas'), {width:GAME_SIZE,height:GAME_SIZE});
+    const bg = surface.getContext('2d', {alpha:false});
+    bg.fillStyle='#0d0b0a'; bg.fillRect(0,0,GAME_SIZE,GAME_SIZE);
+    const mid=GAME_SIZE/2, grad=bg.createRadialGradient(mid,mid,GAME_SIZE*.08,mid,mid,GAME_SIZE*.72);
+    grad.addColorStop(0,'rgba(70,55,42,.18)'); grad.addColorStop(.75,'rgba(10,9,8,.88)'); grad.addColorStop(1,'rgba(0,0,0,1)'); bg.fillStyle=grad; bg.fillRect(0,0,GAME_SIZE,GAME_SIZE);
+    cachedArenaBackground=surface; cachedArenaBackgroundSize=GAME_SIZE; return surface;
+}
 function drawBackground(ctx) {
-    ctx.fillStyle = '#0d0b0a'; ctx.fillRect(0,0,GAME_SIZE,GAME_SIZE);
-    const grad = ctx.createRadialGradient(500,500,80,500,500,720); grad.addColorStop(0,'rgba(70,55,42,.18)'); grad.addColorStop(.75,'rgba(10,9,8,.88)'); grad.addColorStop(1,'rgba(0,0,0,1)'); ctx.fillStyle=grad; ctx.fillRect(0,0,GAME_SIZE,GAME_SIZE);
+    ctx.drawImage(staticArenaBackground(),0,0);
     ctx.save(); ctx.globalAlpha=.14; ctx.strokeStyle='#b2a47e'; ctx.lineWidth=1; for(let x=0;x<=GAME_SIZE;x+=50){ctx.beginPath();ctx.moveTo(x+rand(-.8,.8),0);ctx.lineTo(x+rand(-.8,.8),GAME_SIZE);ctx.stroke();} for(let y=0;y<=GAME_SIZE;y+=50){ctx.beginPath();ctx.moveTo(0,y+rand(-.8,.8));ctx.lineTo(GAME_SIZE,y+rand(-.8,.8));ctx.stroke();}
     ctx.globalAlpha=.34; ctx.strokeStyle='#5f513b'; ctx.lineWidth=9; ctx.strokeRect(4,4,GAME_SIZE-8,GAME_SIZE-8); if(sawWallRage.timer>0){ctx.globalAlpha=.85;ctx.strokeStyle='#d7caba';ctx.lineWidth=26;ctx.setLineDash([18,12]);ctx.strokeRect(10,10,GAME_SIZE-20,GAME_SIZE-20);ctx.setLineDash([]);ctx.strokeStyle='#9b1d18';ctx.lineWidth=7;ctx.strokeRect(26,26,GAME_SIZE-52,GAME_SIZE-52);} ctx.globalAlpha=.10; ctx.fillStyle='#fff'; for(let i=0;i<140;i++)ctx.fillRect((i*137)%1000,(i*277)%1000,2,2); ctx.globalAlpha=.13; ctx.fillStyle='#2b2119'; for(let i=0;i<60;i++)ctx.fillRect((i*211)%1000,(i*83)%1000,rand(4,14),rand(4,14)); ctx.restore();
     drawTimeArenaClock(ctx);

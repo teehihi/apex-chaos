@@ -74,7 +74,7 @@
   };
   const audio = {};
   const audioPools = {};
-  const state = { waves:[], vfx:[], lastTick:0, updateFrame:0, perf:{secondStart:0, collisionCalls:0, oneSwordTriggers:0, twinTriggers:0, infiniteTriggers:0, frameTimeMs:0} };
+  const state = { waves:[], vfx:[], lastTick:0, updateFrame:0, filteredFrames:{clone:[],afterimage:[]}, perf:{secondStart:0, collisionCalls:0, oneSwordTriggers:0, twinTriggers:0, infiniteTriggers:0, frameTimeMs:0} };
   const bladeMask = { canvas:null, ctx:null, data:null, width:0, height:0 };
   let nextWaveId = 1;
   let nextVfxId = 1;
@@ -110,6 +110,31 @@
     ctx.restore();
     return true;
   }
+  const FILTERED_FRAME_SPECS = Object.freeze({
+    clone:{filter:'saturate(.48) opacity(.72) drop-shadow(0 0 7px rgba(255,120,183,.55))',pad:18},
+    afterimage:{filter:'saturate(.55) opacity(.65) drop-shadow(0 0 9px rgba(255,112,188,.55))',pad:24}
+  });
+  function bakeFilteredFrame(img, kind) {
+    if (!img?.naturalWidth || !FILTERED_FRAME_SPECS[kind]) return null;
+    const index=frameImages.indexOf(img), bucket=state.filteredFrames[kind];
+    if (index>=0 && bucket[index]) return bucket[index];
+    const spec=FILTERED_FRAME_SPECS[kind], bodyW=img.naturalWidth*C.scale, bodyH=img.naturalHeight*C.scale;
+    const surface=typeof OffscreenCanvas!=='undefined'
+      ? new OffscreenCanvas(Math.ceil(bodyW+spec.pad*2),Math.ceil(bodyH+spec.pad*2))
+      : Object.assign(document.createElement('canvas'),{width:Math.ceil(bodyW+spec.pad*2),height:Math.ceil(bodyH+spec.pad*2)});
+    const c=surface.getContext('2d'); if(!c)return null;
+    c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';c.filter=spec.filter;
+    c.drawImage(img,spec.pad,spec.pad,bodyW,bodyH);c.filter='none';
+    const entry={canvas:surface,w:surface.width,h:surface.height};
+    if(index>=0)bucket[index]=entry;
+    return entry;
+  }
+  function drawFilteredFrame(ctx,img,kind,alpha=1,scale=C.scale) {
+    if(scale!==C.scale)return false;
+    const cached=bakeFilteredFrame(img,kind);if(!cached)return false;
+    ctx.save();ctx.filter='none';ctx.globalAlpha*=alpha;ctx.drawImage(cached.canvas,-cached.w/2,-cached.h/2,cached.w,cached.h);ctx.restore();
+    return true;
+  }
   function warmKatanaVisualAssets() {
     if (state.visualWarmup?.started) return state.visualWarmup.promise;
     const canvas = typeof OffscreenCanvas !== 'undefined'
@@ -123,6 +148,7 @@
       ready:false,
       promise:Promise.all(hotImages.map(whenImageReady)).then(() => {
         for (const img of hotImages) warmDrawImage(warmCtx, img, img === images.sakuraPetal ? .08 : .35);
+        for (const img of hotFrames) { bakeFilteredFrame(img,'clone'); bakeFilteredFrame(img,'afterimage'); }
         ensureBladeMask();
         state.visualWarmup.bladeMaskReady = !!bladeMask.data;
         state.visualWarmup.ready = true;
@@ -293,10 +319,21 @@
     const idx = frameIndex(f);
     return { frame:idx, image:frameImages[idx - 1], dir:{x:f.dir.x,y:f.dir.y} };
   }
+  function clonePetalOrbit(id) {
+    const items=[];
+    for(let i=0;i<3;i++){
+      const seed=n=>((Math.sin((id*37.17+i*91.73+n*17.41))*43758.5453)%1+1)%1;
+      items.push({duration:2.5+seed(1)*1.7,phase:seed(2)*2.7,baseX:(seed(3)-.5)*126,drift:(seed(4)-.5)*34,
+        wavePhase:seed(5)*TAU,waveSize:7+seed(6)*11,fall:116+seed(7)*34,rotation:(seed(8)-.5)*1.4,
+        spin:1.2+seed(9)*2.4,alpha:.45+seed(10)*.35,scale:.022+seed(11)*.015});
+    }
+    return items;
+  }
   function createClone(f, x=f.x, y=f.y, dir=f.dir) {
     const d = katanaData(f);
     const rec = currentFrameRecord(f);
     const clone = { id:++d.cloneSerial, ownerId:f.id, x, y, dir:{x:dir.x,y:dir.y}, frame:rec.frame, createdAt:matchClock, consumed:false, reserved:false };
+    clone.petalOrbit=clonePetalOrbit(clone.id);
     d.clones.push(clone);
     for (let i=0;i<6;i++) spawnPetal(clone.x + rand(-28,28), clone.y + rand(-28,28), rand(-20,20), rand(-34,24), .95 + rand(0,.55), .36, clone.id);
     updateCentroid(f);
@@ -345,6 +382,7 @@
     const fx = { type:'petal', id:nextVfxId++, x,y,vx:vx+rand(-18,18),vy:vy+rand(-25,20),rot:rand(0,TAU),spin:rand(-5,5),scale:rand(.035,.075) * C.effectScale,life,maxLife:life,alpha,cloneId };
     if (anchor?.target) {
       fx.targetId = anchor.target.id;
+      fx.targetRef = anchor.target;
       fx.ox = x - anchor.target.x;
       fx.oy = y - anchor.target.y;
       fx.sticky = true;
@@ -355,6 +393,7 @@
     const fx = { type:'slash', id:nextVfxId++, x,y,angle:angle + (second ? Math.PI/3 : 0), scale:(second ? .25 : .22) * C.effectScale, life:.36, maxLife:.36 };
     if (target) {
       fx.targetId = target.id;
+      fx.targetRef = target;
       fx.ox = x - target.x;
       fx.oy = y - target.y;
       fx.sticky = true;
@@ -382,8 +421,9 @@
   }
   function syncStickyFx(fx) {
     if (!fx?.sticky || fx.targetId === undefined) return;
-    const target = fighters.find(q => q && q.id === fx.targetId);
+    const target = fx.targetRef?.id===fx.targetId ? fx.targetRef : fighters.find(q => q && q.id === fx.targetId);
     if (!target) return;
+    fx.targetRef=target;
     fx.x = target.x + (fx.ox || 0);
     fx.y = target.y + (fx.oy || 0);
   }
@@ -791,6 +831,30 @@
   function isManualKatana(f) {
     return !!(f?.name === 'KATANA' && f.data?.manualController?.mode === 'MANUAL_LAB' && f.data.manualController.active);
   }
+  function normalizeManualMove(v) {
+    if (!v || !Number.isFinite(v.x) || !Number.isFinite(v.y)) return {x:0,y:0};
+    const len = Math.hypot(v.x, v.y);
+    return len > 0 ? {x:v.x/len, y:v.y/len} : {x:0,y:0};
+  }
+  function markManualKatanaIntent(f, controller, d=katanaData(f), m=manualState(f)) {
+    const aim = controller?.getAimPoint?.();
+    const aimDir = aim && controller?.hasAimPoint?.() && Number.isFinite(aim.x) && Number.isFinite(aim.y)
+      ? norm(aim.x - f.x, aim.y - f.y)
+      : norm(d.visualDir?.x || f.dir?.x || 1, d.visualDir?.y || f.dir?.y || 0);
+    const move = normalizeManualMove(controller?.getMoveVector?.());
+    const actionLocked = !!(d.action || m.qDash || m.rewrite || m.rCharge);
+    f.data ||= {};
+    f.data.apexControlManualMove = move;
+    f.data.apexControlManualAimDir = {x:aimDir.x || 1, y:aimDir.y || 0};
+    f.data.apexControlManualBaseLock = true;
+    f.data.apexControlManualActionLock = actionLocked;
+    f.data.positionLocked = true;
+    if (!actionLocked && (aimDir.x || aimDir.y)) {
+      f.setDir(aimDir.x, aimDir.y);
+      d.visualDir = {x:aimDir.x, y:aimDir.y};
+    }
+    return {aimDir, move, actionLocked};
+  }
   function manualFeedback(f, text, duration=.7) {
     const m = manualState(f);
     m.feedback = text;
@@ -1124,6 +1188,7 @@
     m.collisionCd=Math.max(0,(m.collisionCd || 0)-dt);
     m.qWindowRemaining=Math.max(0,m.qWindowRemaining-dt);
     const aim=controller.getAimPoint();
+    markManualKatanaIntent(f, controller, d, m);
     const active=updateCentroid(f);
     updateManualCloneSelection(d,m,aim,active);
     if (e && active && !d.action) {
@@ -1136,6 +1201,7 @@
     if (controller.consume('ABILITY_2')) manualEvade(f,controller);
     const actionBefore=d.action?.type || null;
     if (updateManualApexCharge(f, dt)) {
+      markManualKatanaIntent(f, controller, d, m);
       updateMoon(f,dt);
       if (e) d.lastEnemy={x:e.x,y:e.y};
       return;
@@ -1147,6 +1213,7 @@
     if (d.action?.type==='infinite' || d.action?.type==='twin') {
       m.qDash=null;
       d.manualQPassThrough=false;
+      markManualKatanaIntent(f, controller, d, m);
       updateMoon(f,dt);
       if (e) d.lastEnemy={x:e.x,y:e.y};
       return;
@@ -1160,9 +1227,12 @@
       else if (controller.isHeld('SECONDARY')) { m.mode='rmbWindup'; m.swordTime=0; resetAnim(f); }
     } else if (m.mode!=='idle') controller.consume('PRIMARY');
     updateManualAnimation(f,e,dt,controller);
-    if (!acted && !m.qDash && !d.action) {
-      const move=controller.getMoveVector?.() || {x:0,y:0};
-      if (move.x||move.y) { f.setDir(move.x,move.y); d.visualDir={x:move.x,y:move.y}; }
+    if (!acted && !m.qDash && !d.action) markManualKatanaIntent(f, controller, d, m);
+    else {
+      f.data ||= {};
+      f.data.apexControlManualBaseLock = true;
+      f.data.apexControlManualActionLock = !!(d.action || m.qDash || m.rewrite || m.rCharge);
+      f.data.positionLocked = true;
     }
     updateMoon(f,dt);
     if (e) d.lastEnemy={x:e.x,y:e.y};
@@ -1471,7 +1541,7 @@
   }
   function updateWaves(dt) {
     for (const w of state.waves) updateWave(w, dt);
-    state.waves = state.waves.filter(w => Number.isFinite(w.life) && w.life > 0 && !w.hit && Number.isFinite(w.x) && Number.isFinite(w.y));
+    let write=0;for(let i=0;i<state.waves.length;i++){const w=state.waves[i];if(Number.isFinite(w.life)&&w.life>0&&!w.hit&&Number.isFinite(w.x)&&Number.isFinite(w.y))state.waves[write++]=w;}state.waves.length=write;
   }
   function updateVisuals(dt) {
     for (const fx of state.vfx) {
@@ -1487,7 +1557,7 @@
         fx.rot += (fx.spin || 0) * dt;
       }
     }
-    state.vfx = state.vfx.filter(fx => fx.life > 0);
+    let write=0;for(let i=0;i<state.vfx.length;i++){const fx=state.vfx[i];if(fx.life>0)state.vfx[write++]=fx;}state.vfx.length=write;
   }
   function updateMoon(f, dt) {
     const d = katanaData(f);
@@ -1602,20 +1672,18 @@
     ctx.save();
     ctx.translate(c.x,c.y);
     const petalImg = images.sakuraPetal;
+    const orbit=c.petalOrbit||(c.petalOrbit=clonePetalOrbit(c.id));
     for (let i=0;i<3;i++) {
-      const seed = n => ((Math.sin((c.id * 37.17 + i * 91.73 + n * 17.41)) * 43758.5453) % 1 + 1) % 1;
-      const duration = 2.5 + seed(1) * 1.7;
-      const cycle = ((matchClock + seed(2) * duration * 2.7) % duration + duration) % duration / duration;
-      const baseX = (seed(3) - .5) * 126;
-      const drift = (seed(4) - .5) * 34;
-      const px = baseX + drift * cycle + Math.sin(cycle * TAU + seed(5) * TAU) * (7 + seed(6) * 11);
-      const py = -72 + cycle * (116 + seed(7) * 34);
+      const petal=orbit[i],duration=petal.duration;
+      const cycle = ((matchClock + petal.phase * duration) % duration + duration) % duration / duration;
+      const px = petal.baseX + petal.drift * cycle + Math.sin(cycle * TAU + petal.wavePhase) * petal.waveSize;
+      const py = -72 + cycle * petal.fall;
       ctx.save();
       ctx.translate(px,py);
-      ctx.rotate((seed(8) - .5) * 1.4 + cycle * (1.2 + seed(9) * 2.4));
-      ctx.globalAlpha = Math.sin(cycle * Math.PI) * (.45 + seed(10) * .35);
+      ctx.rotate(petal.rotation + cycle * petal.spin);
+      ctx.globalAlpha = Math.sin(cycle * Math.PI) * petal.alpha;
       if (petalImg.complete && petalImg.naturalWidth) {
-        const ps = .022 + seed(11) * .015;
+        const ps = petal.scale;
         ctx.drawImage(petalImg,-petalImg.naturalWidth*ps/2,-petalImg.naturalHeight*ps/2,petalImg.naturalWidth*ps,petalImg.naturalHeight*ps);
       } else {
         ctx.fillStyle = '#ffaad3';
@@ -1624,8 +1692,8 @@
       ctx.restore();
     }
     ctx.rotate(Math.atan2(c.dir.y,c.dir.x) + C.bodyForwardOffset);
-    ctx.filter = 'saturate(.48) opacity(.72) drop-shadow(0 0 7px rgba(255,120,183,.55))';
-    drawBodyImage(ctx, frameImages[c.frame - 1], .55, C.scale);
+    const body=frameImages[c.frame-1];
+    if(!drawFilteredFrame(ctx,body,'clone',.55,C.scale)){ctx.filter=FILTERED_FRAME_SPECS.clone.filter;drawBodyImage(ctx,body,.55,C.scale);}
     ctx.restore();
   }
   function drawMoon(ctx,f) {
@@ -1680,15 +1748,14 @@
       const isTop = fx.type === 'petal' || fx.type === 'slash';
       if (layer === 'top' && !isTop) continue;
       if (layer === 'under' && isTop) continue;
-      syncStickyFx(fx);
       if (!visibleInApexView(fx.x, fx.y, fx.type === 'afterimage' ? 150 : 100)) continue;
       const a = clamp(fx.life / Math.max(.001, fx.maxLife), 0, 1);
       ctx.save();
       ctx.globalAlpha = (fx.alpha ?? 1) * a;
       if (fx.type === 'afterimage') {
         ctx.translate(fx.x,fx.y); ctx.rotate(Math.atan2(fx.dir.y,fx.dir.x) + C.bodyForwardOffset);
-        ctx.filter = 'saturate(.55) opacity(.65) drop-shadow(0 0 9px rgba(255,112,188,.55))';
-        drawBodyImage(ctx, frameImages[(fx.frame || 1) - 1], .62 * a, fx.scale || C.scale);
+        const body=frameImages[(fx.frame||1)-1],scale=fx.scale||C.scale;
+        if(!drawFilteredFrame(ctx,body,'afterimage',.62*a,scale)){ctx.filter=FILTERED_FRAME_SPECS.afterimage.filter;drawBodyImage(ctx,body,.62*a,scale);}
       } else if (fx.type === 'petal') {
         const img = images.sakuraPetal;
         ctx.translate(fx.x,fx.y); ctx.rotate(fx.rot || 0);

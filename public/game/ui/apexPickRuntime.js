@@ -37,7 +37,8 @@
   let carouselTouched = false;
   let stage = null;
   let pickAnimationTimer = 0;
-  const PICK_CARD_ANIMATION_MS = 90;
+  const PICK_CARD_ANIMATION_MS = 60;
+  const PICK_IMAGE_BATCH_SIZE = 6;
   const refs = new Map();
   const pendingImages = [];
   const warmedPickChromeSources = new Set();
@@ -45,12 +46,20 @@
 
   function pumpImageQueue() {
     pendingImageTimer = 0;
-    const next = pendingImages.shift();
-    if (next && next.img.isConnected && next.img.dataset.apexPendingSrc === next.src) {
-      delete next.img.dataset.apexPendingSrc;
-      next.img.src = next.src;
+    let pumped = 0;
+    while (pumped < PICK_IMAGE_BATCH_SIZE && pendingImages.length) {
+      const next = pendingImages.shift();
+      if (next && next.img.isConnected && next.img.dataset.apexPendingSrc === next.src) {
+        delete next.img.dataset.apexPendingSrc;
+        next.img.src = next.src;
+        pumped += 1;
+      }
     }
-    if (pendingImages.length) pendingImageTimer = window.setTimeout(pumpImageQueue, 16);
+    if (pendingImages.length) {
+      pendingImageTimer = window.requestAnimationFrame
+        ? window.requestAnimationFrame(pumpImageQueue)
+        : window.setTimeout(pumpImageQueue, 16);
+    }
   }
 
   function assignImageSource(img, src, immediate = false) {
@@ -725,6 +734,37 @@
 
   let pickChromeWarmup = null;
   const pickChromeWarmImages = [];
+  function warmPickImage(src) {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.decoding = 'async';
+      pickChromeWarmImages.push(img);
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        if (img.naturalWidth) warmedPickChromeSources.add(src);
+        resolve();
+      };
+      img.onload = () => {
+        if (img.decode) img.decode().catch(() => {}).finally(finish);
+        else finish();
+      };
+      img.onerror = finish;
+      img.src = src;
+      window.setTimeout(finish, 1000);
+    });
+  }
+  async function warmPickImagesInBatches(sources, concurrency=4) {
+    let index = 0;
+    const workerCount = Math.max(1, Math.min(concurrency, sources.length));
+    await Promise.all(Array.from({length:workerCount}, async () => {
+      while (index < sources.length) {
+        const src = sources[index++];
+        await warmPickImage(src);
+      }
+    }));
+  }
   function warmPickChrome() {
     if (pickChromeWarmup) return pickChromeWarmup;
     pickChromeWarmup = loadLayout().then(async () => {
@@ -740,27 +780,7 @@
         cardFrame.tint,
         cardFrame.selectedGlow,
       ])];
-      for (const src of sources) {
-        await new Promise(resolve => {
-          const img = new Image();
-          img.decoding = 'async';
-          pickChromeWarmImages.push(img);
-          let settled = false;
-          const finish = () => {
-            if (settled) return;
-            settled = true;
-            if (img.naturalWidth) warmedPickChromeSources.add(src);
-            resolve();
-          };
-          img.onload = () => {
-            if (img.decode) img.decode().catch(() => {}).finally(finish);
-            else finish();
-          };
-          img.onerror = finish;
-          img.src = src;
-          window.setTimeout(finish, 1200);
-        });
-      }
+      await warmPickImagesInBatches(sources, 4);
     }).catch(error => {
       console.warn('[Apex Pick] Chrome warmup failed.', error);
     });

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-30T05:09:46.869Z",
+  "generatedAt": "2026-07-03T12:37:13.023Z",
   "loadingAssets": {
     "bgPortrait": "/assets/loading/loading-bg-portrait.webp",
     "bgLandscape": "/assets/loading/loading-bg-landscape.webp",
@@ -10,7 +10,7 @@
     {
       "path": "/apexEngine.js",
       "type": "script",
-      "bytes": 223988
+      "bytes": 227564
     },
     {
       "path": "/assets/arcade_v1/normalized/battle_idle_reference.webp",
@@ -875,7 +875,7 @@
     {
       "path": "/assets/fang_v1/manifest.json",
       "type": "data",
-      "bytes": 44361
+      "bytes": 46323
     },
     {
       "path": "/assets/fang_v1/moonIcon.webp",
@@ -1435,7 +1435,7 @@
     {
       "path": "/assets/katana_v1/manifest.json",
       "type": "data",
-      "bytes": 18051
+      "bytes": 18859
     },
     {
       "path": "/assets/katana_v1/pickButton.webp",
@@ -1825,7 +1825,7 @@
     {
       "path": "/assets/pick_ui_final/assets/card-frame-imagen-portrait-3x4-exact-layers/card-frame-imagen-portrait-3x4-exact-layers-manifest.json",
       "type": "data",
-      "bytes": 2038
+      "bytes": 2083
     },
     {
       "path": "/assets/pick_ui_final/assets/card-frame-imagen-portrait-3x4-no-hole-layers/61-card-frame-imagen-portrait-3x4-solid-base-no-holes.webp",
@@ -1860,7 +1860,7 @@
     {
       "path": "/assets/pick_ui_final/assets/card-frame-imagen-portrait-3x4-no-hole-layers/card-frame-imagen-portrait-3x4-no-hole-layers-manifest.json",
       "type": "data",
-      "bytes": 741
+      "bytes": 757
     },
     {
       "path": "/assets/pick_ui_final/assets/card-frame-imagen-portrait-3x4-open-center-no-hex-layers/71-card-frame-imagen-portrait-3x4-base-open-center-no-hex-hole.webp",
@@ -1895,7 +1895,7 @@
     {
       "path": "/assets/pick_ui_final/assets/card-frame-imagen-portrait-3x4-open-center-no-hex-layers/card-frame-imagen-portrait-3x4-open-center-no-hex-layers-manifest.json",
       "type": "data",
-      "bytes": 777
+      "bytes": 791
     },
     {
       "path": "/assets/pick_ui_final/assets/card-frame-imagen-portrait-3x4/42-card-frame-imagen-portrait-3x4-color-mask.webp",
@@ -1945,7 +1945,7 @@
     {
       "path": "/assets/pick_ui_final/assets/champions.json",
       "type": "data",
-      "bytes": 3794
+      "bytes": 3957
     },
     {
       "path": "/assets/pick_ui_final/assets/generated-cards/engineer-card-normal.webp",
@@ -2200,12 +2200,12 @@
     {
       "path": "/assets/pick_ui_final/pick-layout-card-system-v1.json",
       "type": "data",
-      "bytes": 51697
+      "bytes": 53550
     },
     {
       "path": "/assets/pick_ui_final/pick-layout-final-v1.json",
       "type": "data",
-      "bytes": 86522
+      "bytes": 89566
     },
     {
       "path": "/assets/puppet_v1/normalized/effigy_wall_4.webp",
@@ -2325,7 +2325,7 @@
     {
       "path": "/assets/shotgun_v1/manifest.json",
       "type": "data",
-      "bytes": 5307
+      "bytes": 5560
     },
     {
       "path": "/assets/shotgun_v1/muzzle.webp",
@@ -2835,207 +2835,207 @@
     {
       "path": "/game/core/apexCanonicalBalance.js",
       "type": "script",
-      "bytes": 119027
+      "bytes": 121314
     },
     {
       "path": "/game/core/apexFightTelemetry.js",
       "type": "script",
-      "bytes": 25033
+      "bytes": 25370
     },
     {
       "path": "/game/core/apexFullRosterQa.js",
       "type": "script",
-      "bytes": 13085
+      "bytes": 13307
     },
     {
       "path": "/game/core/apexMajorMechanicVisuals.js",
       "type": "script",
-      "bytes": 27915
+      "bytes": 28193
     },
     {
       "path": "/game/core/apexPoseLockRuntime.js",
       "type": "script",
-      "bytes": 7306
+      "bytes": 7490
     },
     {
       "path": "/game/core/apexPrecisionFixes.js",
       "type": "script",
-      "bytes": 29726
+      "bytes": 29965
     },
     {
       "path": "/game/core/apexRosterExtensions.js",
       "type": "script",
-      "bytes": 42631
+      "bytes": 43080
     },
     {
       "path": "/game/core/apexTextHygiene.js",
       "type": "script",
-      "bytes": 7255
+      "bytes": 7389
     },
     {
       "path": "/game/core/apexUtilityFeatures.js",
       "type": "script",
-      "bytes": 18929
+      "bytes": 19352
     },
     {
       "path": "/game/fighters/arcadeVisualRuntime.js",
       "type": "script",
-      "bytes": 26443
+      "bytes": 27081
     },
     {
       "path": "/game/fighters/bladeVisualRuntime.js",
       "type": "script",
-      "bytes": 20230
+      "bytes": 20704
     },
     {
       "path": "/game/fighters/engineerRuntime.js",
       "type": "script",
-      "bytes": 125822
+      "bytes": 128662
     },
     {
       "path": "/game/fighters/fangRuntime.js",
       "type": "script",
-      "bytes": 39959
+      "bytes": 40308
     },
     {
       "path": "/game/fighters/galaxyRefinementRuntime.js",
       "type": "script",
-      "bytes": 60527
+      "bytes": 61991
     },
     {
       "path": "/game/fighters/galaxyRuntime.js",
       "type": "script",
-      "bytes": 38701
+      "bytes": 39571
     },
     {
       "path": "/game/fighters/iceVisualRuntime.js",
       "type": "script",
-      "bytes": 29885
+      "bytes": 30557
     },
     {
       "path": "/game/fighters/katanaRuntime.js",
       "type": "script",
-      "bytes": 92162
+      "bytes": 97985
     },
     {
       "path": "/game/fighters/musicianVisualRuntime.js",
       "type": "script",
-      "bytes": 22312
+      "bytes": 22875
     },
     {
       "path": "/game/fighters/ninjaVisualRuntime.js",
       "type": "script",
-      "bytes": 29681
+      "bytes": 30324
     },
     {
       "path": "/game/fighters/puppetVisualRuntime.js",
       "type": "script",
-      "bytes": 25507
+      "bytes": 26099
     },
     {
       "path": "/game/fighters/shotgunRuntime.js",
       "type": "script",
-      "bytes": 52605
+      "bytes": 54423
     },
     {
       "path": "/game/fighters/soccerChampionRuntime.js",
       "type": "script",
-      "bytes": 64220
+      "bytes": 67010
     },
     {
       "path": "/game/fighters/soccerRuntime.js",
       "type": "script",
-      "bytes": 15223
+      "bytes": 15562
     },
     {
       "path": "/game/fighters/stringHardeningRuntime.js",
       "type": "script",
-      "bytes": 7858
+      "bytes": 8073
     },
     {
       "path": "/game/fighters/stringRuntime.js",
       "type": "script",
-      "bytes": 72204
+      "bytes": 73846
     },
     {
       "path": "/game/guards/apexBattleVisibilityGuard.js",
       "type": "script",
-      "bytes": 1361
+      "bytes": 1390
     },
     {
       "path": "/game/guards/apexEngineerGuards.js",
       "type": "script",
-      "bytes": 8188
+      "bytes": 8398
     },
     {
       "path": "/game/guards/apexEngineerMergeBridge.js",
       "type": "script",
-      "bytes": 498
+      "bytes": 508
     },
     {
       "path": "/game/guards/apexFinalMatchGuard.js",
       "type": "script",
-      "bytes": 3708
+      "bytes": 3824
     },
     {
       "path": "/game/guards/apexFreezeDisappearHotfix.js",
       "type": "script",
-      "bytes": 14120
+      "bytes": 14363
     },
     {
       "path": "/game/guards/apexGalaxyGuards.js",
       "type": "script",
-      "bytes": 5634
+      "bytes": 5772
     },
     {
       "path": "/game/guards/apexRuntimeStability.js",
       "type": "script",
-      "bytes": 2628
+      "bytes": 2691
     },
     {
       "path": "/game/guards/apexShotgunLateBinder.js",
       "type": "script",
-      "bytes": 1230
+      "bytes": 1251
     },
     {
       "path": "/game/guards/apexSlimeBodyCap.js",
       "type": "script",
-      "bytes": 814
+      "bytes": 834
     },
     {
       "path": "/game/modes/soloRuntime.js",
       "type": "script",
-      "bytes": 25391
+      "bytes": 25511
     },
     {
       "path": "/game/modes/tamChienRuntime.js",
       "type": "script",
-      "bytes": 41795
+      "bytes": 42607
     },
     {
       "path": "/game/modes/trialRuntime.js",
       "type": "script",
-      "bytes": 13318
+      "bytes": 13630
     },
     {
       "path": "/game/ui/apexCharacterSelectUi.js",
       "type": "script",
-      "bytes": 22416
+      "bytes": 22872
     },
     {
       "path": "/game/ui/apexPickRuntime.js",
       "type": "script",
-      "bytes": 34415
+      "bytes": 35782
     },
     {
       "path": "/manualLab.js",
       "type": "script",
-      "bytes": 199085
+      "bytes": 208793
     },
     {
       "path": "/manualLabOnline.js",
       "type": "script",
-      "bytes": 7457
+      "bytes": 9574
     },
     {
       "path": "/sniper_cloak_move_sprite.webp",

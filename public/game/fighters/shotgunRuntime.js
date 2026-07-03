@@ -434,9 +434,9 @@
     const fireMuzzleDistance=(C.GUN_Y+C.GUN_LENGTH*.5-C.GUN_RECOIL)*scale;
     const visualDistance=Math.min(fireMuzzleDistance,Math.max(owner.radius+22,nearestEnd-10));
     const visualMuzzle={x:owner.x+dir.x*visualDistance+side.x*C.MUZZLE_SIDE_OFFSET*scale,y:owner.y+dir.y*visualDistance+side.y*C.MUZZLE_SIDE_OFFSET*scale};
-    vfx.push({type:'streaks',ownerId:owner.id,x:visualMuzzle.x,y:visualMuzzle.y,rays,life:.19,maxLife:.19,travelTime:.13});
-    vfx.push({type:'muzzle',ownerId:owner.id,x:visualMuzzle.x,y:visualMuzzle.y,angle:Math.atan2(dir.y,dir.x),life:.12,maxLife:.12});
-    vfx.push({type:'shell',x:owner.x+side.x*31,y:owner.y+side.y*31,vx:-dir.x*90+side.x*310,vy:-dir.y*90+side.y*310,angle:Math.atan2(dir.y,dir.x),spin:13,life:1.15,maxLife:1.15});
+    vfx.push({type:'streaks',ownerId:owner.id,x:visualMuzzle.x,y:visualMuzzle.y,rays,life:.19,maxLife:.19,travelTime:.13,createdAt:matchClock});
+    vfx.push({type:'muzzle',ownerId:owner.id,x:visualMuzzle.x,y:visualMuzzle.y,angle:Math.atan2(dir.y,dir.x),life:.12,maxLife:.12,createdAt:matchClock});
+    vfx.push({type:'shell',x:owner.x+side.x*31,y:owner.y+side.y*31,vx:-dir.x*90+side.x*310,vy:-dir.y*90+side.y*310,angle:Math.atan2(dir.y,dir.x),spin:13,life:1.15,maxLife:1.15,createdAt:matchClock});
     playShotgunSound('fire',.84);
     cameraShake=Math.max(cameraShake,4.5);
     hitStop=Math.max(hitStop,.018);
@@ -836,11 +836,20 @@
   };
 
   function updateVfx(dt) {
-    for (const fx of vfx) {
-      fx.life-=dt;
-      if (fx.type==='shell') { fx.x+=fx.vx*dt; fx.y+=fx.vy*dt; fx.vy+=360*dt; fx.angle+=fx.spin*dt; }
+    const controlFrameKey = window.__apexControlUpdateFrameKey;
+    if (controlFrameKey) {
+      if (window.__apexShotgunVfxUpdateFrameKey === controlFrameKey) return;
+      window.__apexShotgunVfxUpdateFrameKey = controlFrameKey;
     }
-    for (let i=vfx.length-1;i>=0;i--) if (vfx[i].life<=0) vfx.splice(i,1);
+    for (const fx of vfx) {
+      if (!Number.isFinite(fx.createdAt)) fx.createdAt = matchClock;
+      fx.life = Number.isFinite(fx.life) ? fx.life - dt : 0;
+      if (fx.type==='shell') {
+        fx.x+=fx.vx*dt; fx.y+=fx.vy*dt; fx.vy+=360*dt; fx.angle+=fx.spin*dt;
+        if (matchClock - fx.createdAt > Math.max(1.35, (fx.maxLife || 1.15) + .35)) fx.life = 0;
+      }
+    }
+    for (let i=vfx.length-1;i>=0;i--) if (!vfx[i] || !Number.isFinite(vfx[i].life) || vfx[i].life<=0) vfx.splice(i,1);
     for (const f of fighters||[]) {
       const motion=f?.data?.shotgunKnockback;
       if (motion) {
@@ -860,6 +869,11 @@
     }
   }
   function drawVfx(ctx) {
+    const controlFrameKey = window.__apexControlDrawFrameKey;
+    if (controlFrameKey) {
+      if (window.__apexShotgunVfxDrawFrameKey === controlFrameKey) return;
+      window.__apexShotgunVfxDrawFrameKey = controlFrameKey;
+    }
     for (const fx of vfx) {
       const a=clamp(fx.life/fx.maxLife,0,1);
       ctx.save(); ctx.globalAlpha=a;

@@ -1371,6 +1371,7 @@
         f.hp = Math.max(1, f.hp);
         f.x = wm.x;
         f.y = wm.y;
+        f.data.positionLocked = true;
         d.salvagePulse = 0;
         d.salvageLock = 0;
         d.openingPending = false;

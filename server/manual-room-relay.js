@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const MANUAL_ROOM_ROUTE = '/__manual-lab-room';
+const DEFAULT_ROOM_MODE = 'manual';
 
 function encodeWsText(text) {
   const payload = Buffer.from(text);
@@ -81,28 +82,41 @@ export function createManualRoomRelay() {
     if (!client || client.socket.destroyed) return;
     client.socket.write(encodeWsText(JSON.stringify(payload)));
   };
-  const peers = client => client.room && rooms.get(client.room) ? [...rooms.get(client.room)].filter(peer => peer !== client) : [];
+  const roomRecord = code => rooms.get(code);
+  const roomPeers = room => room?.peers || room;
+  const roomMode = room => room?.mode || DEFAULT_ROOM_MODE;
+  const peers = client => {
+    const room = client.room && roomRecord(client.room);
+    const set = roomPeers(room);
+    return set ? [...set].filter(peer => peer !== client) : [];
+  };
   const relay = (client, payload) => {
     for (const peer of peers(client)) send(peer, payload);
   };
   const leave = (client) => {
     if (!client.room || !rooms.has(client.room)) return;
-    const set = rooms.get(client.room);
+    const room = roomRecord(client.room);
+    const set = roomPeers(room);
     set.delete(client);
-    relay(client, { type:'peer-left', room:client.room });
+    relay(client, { type:'peer-left', room:client.room, mode:roomMode(room) });
     if (set.size === 0) rooms.delete(client.room);
     client.room = null;
+    client.mode = null;
   };
-  const joinRoom = (client, code, role) => {
+  const joinRoom = (client, code, role, expectedMode = DEFAULT_ROOM_MODE) => {
     const room = rooms.get(code);
     if (!room) return send(client, { type:'error', reason:'ROOM NOT FOUND' });
-    if (room.size >= 2 && !room.has(client)) return send(client, { type:'error', reason:'ROOM FULL' });
+    const set = roomPeers(room);
+    const mode = roomMode(room);
+    if (expectedMode && mode !== expectedMode) return send(client, { type:'error', reason:`ROOM IS ${mode.toUpperCase()}` });
+    if (set.size >= 2 && !set.has(client)) return send(client, { type:'error', reason:'ROOM FULL' });
     leave(client);
-    room.add(client);
+    set.add(client);
     client.room = code;
     client.role = role;
-    send(client, { type:'joined', room:code, role, peers:room.size });
-    relay(client, { type:'peer-joined', room:code, peers:room.size });
+    client.mode = mode;
+    send(client, { type:'joined', room:code, role, mode, peers:set.size });
+    relay(client, { type:'peer-joined', room:code, mode, peers:set.size });
     return null;
   };
 
@@ -131,16 +145,23 @@ export function createManualRoomRelay() {
         const decoded = decodeWsFrames(pending, (text) => {
           const message = JSON.parse(text);
           if (message.type === 'create') {
+            const mode = String(message.mode || DEFAULT_ROOM_MODE).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '') || DEFAULT_ROOM_MODE;
             const code = makeRoomCode();
-            rooms.set(code, new Set());
-            joinRoom(client, code, 'host');
-            send(client, { type:'created', room:code, role:'host' });
+            rooms.set(code, { mode, peers:new Set() });
+            joinRoom(client, code, 'host', mode);
+            send(client, { type:'created', room:code, role:'host', mode });
           } else if (message.type === 'join') {
             const code = String(message.room || '').trim().toUpperCase();
-            joinRoom(client, code, 'guest');
+            const mode = String(message.mode || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '') || null;
+            joinRoom(client, code, 'guest', mode || undefined);
+          } else if (message.type === 'ping') {
+            const room = client.room && roomRecord(client.room);
+            const set = roomPeers(room);
+            const peerCount = set ? set.size : 0;
+            send(client, { type:'pong', t:message.t, room:client.room, mode:client.mode || roomMode(room), peers:peerCount });
           } else if (['room-start', 'input', 'snapshot', 'chat', 'leave'].includes(message.type)) {
             if (message.type === 'leave') leave(client);
-            else relay(client, { ...message, from:client.role, room:client.room });
+            else relay(client, { ...message, from:client.role, room:client.room, mode:client.mode || message.mode || DEFAULT_ROOM_MODE });
           }
         });
         pending = decoded.rest;

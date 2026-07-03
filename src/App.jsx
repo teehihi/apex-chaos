@@ -569,6 +569,7 @@ export default function App() {
             </div>
           </div>
           <div id="manual-status" className="manual-lab-status">READY</div>
+          <div id="manual-skill-map" className="manual-skill-map hidden" aria-label="Champion skill mapping" />
           <div className="manual-lab-keys">WASD MOVE · MOUSE AIM · LMB BUILD/FIRE · RMB MAGNET · Q/E BLUEPRINT · SPACE MERGE · R WAR MACHINE</div>
         </div>
       </div>
@@ -615,11 +616,11 @@ export default function App() {
         <div id="select-ui">
           <div className="select-loading-panel" aria-live="polite">LOADING SELECT UI</div>
           <div id="manual-room-panel" className="manual-room-panel" aria-live="polite">
-            <div className="manual-room-title">APEX CONTROL ROOM</div>
+            <div className="manual-room-title">APEX CONTROL ONLINE</div>
             <div className="manual-room-row">
-              <button id="manual-room-create" type="button">CREATE</button>
+              <button id="manual-room-create" type="button">CREATE ROOM</button>
               <input id="manual-room-input" type="text" maxLength={4} placeholder="CODE" spellCheck="false" />
-              <button id="manual-room-join" type="button">JOIN</button>
+              <button id="manual-room-join" type="button">JOIN ROOM</button>
             </div>
             <div className="manual-room-row">
               <span>CODE <b id="manual-room-code">----</b></span>
@@ -627,10 +628,11 @@ export default function App() {
             </div>
             <div className="manual-room-row">
               <button id="manual-room-copy" type="button">COPY CODE</button>
-              <button id="manual-room-start" type="button" disabled>START ROOM</button>
+              <button id="manual-room-start" type="button" disabled>START ONLINE</button>
               <button id="manual-room-leave" type="button" disabled>LEAVE</button>
             </div>
-            <div id="manual-room-status" className="manual-room-status">LOCAL ONLY</div>
+            <div id="manual-room-status" className="manual-room-status">LOCAL CONTROL OR ONLINE ROOM</div>
+            <div className="manual-room-hint">Same APEX CONTROL gameplay, VFX and audio · room code only adds realtime online.</div>
           </div>
           <div className="fighter-stage" aria-label="Selected fighters">
             <h2 id="select-title">SELECT PLAYER 1</h2>

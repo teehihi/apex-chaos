@@ -934,7 +934,26 @@
     d.soccerPossessionCooldown=Math.max(0,(d.soccerPossessionCooldown||0)-dt);
     d.soccerCooldownKickTimer=Math.max(0,(d.soccerCooldownKickTimer||0)-dt);
     soccerUpdateBall(f,e,dt);
-    if (!f.hardCC() && !f.hasStatus('abilityDisabled')) soccerUpdateAI(f,e,dt);
+    const manualControl=f.data?.manualController?.active&&f.data.manualController.mode==='MANUAL_LAB';
+    if (manualControl) {
+      d.soccerHalf=soccerHalf(f,d.soccerHalf||'HOME');d.soccerOpponentHalf=soccerHalf(e,d.soccerOpponentHalf||'ENEMY');
+      d.soccerHomeResistanceActive=d.soccerPossessionActive&&d.soccerHalf==='HOME';
+      d.soccerEnemyHalfDodgeActive=d.soccerPossessionActive&&d.soccerHalf==='ENEMY';
+      d.soccerOpponentHomeDebuffActive=d.soccerPossessionActive&&d.soccerOpponentHalf==='HOME';
+      if (!f.hardCC() && !f.hasStatus('abilityDisabled')) {
+        if (d.soccerGoalDriveActive) soccerUpdateGoalDrive(f,e,dt);
+        else if (d.soccerChaseDownActive) soccerUpdateChase(f,e,dt);
+        else if (d.soccerPossessionActive) {
+          d.soccerFieldReveal=Math.min(1,(d.soccerFieldReveal||0)+dt/.42);
+          d.soccerPossessionTimer=Math.max(0,d.soccerPossessionTimer-dt);
+          if (Number.isFinite(f.dir.x)&&Number.isFinite(f.dir.y)&&Math.hypot(f.dir.x,f.dir.y)>.5) soccerSetForward(f,f.dir.x,f.dir.y);
+          if (d.soccerPossessionTimer<=0) {
+            const n=norm(d.soccerVisualForwardX||f.dir.x||0,d.soccerVisualForwardY||f.dir.y||-1);
+            soccerReleaseBall(f,n,C.BALL_MAX_SPEED*C.TIMEOUT_RELEASE_SPEED_RATIO,'manual_possession_timeout',null);
+          }
+        }
+      }
+    } else if (!f.hardCC() && !f.hasStatus('abilityDisabled')) soccerUpdateAI(f,e,dt);
     soccerContactDodgeChance(f);
     const movementLocked=f.data.positionLocked||d.soccerGoalDriveActive||d.soccerPenaltyCinematicActive;
     d.soccerMovementActive=(d.soccerChaseDownActive||!movementLocked)&&!f.hardCC()&&Math.hypot(f.dir.x,f.dir.y)>.5;
@@ -1174,6 +1193,14 @@
   STATE.enterPossession=soccerRecoverPossessionFromFreeBall;
   STATE.armHealKick=soccerArmHealKick;
   STATE.freeBallCatchReady=soccerFreeBallCatchReady;
+  STATE.manualApi={
+    releaseBall:soccerReleaseBall,
+    startChase:soccerStartChase,
+    startGoalDrive:soccerStartGoalDrive,
+    beginPenalty:soccerBeginPenalty,
+    setForward:soccerSetForward,
+    goalGeometry:soccerGoalGeometry
+  };
 
   const previousUpdateSoccer=update;
   update=function(dt){

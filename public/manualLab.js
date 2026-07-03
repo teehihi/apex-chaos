@@ -337,117 +337,6 @@
     allocations:0, last:null
   };
   window.__apexPerfDebug ??= location.hostname === '127.0.0.1' || location.hostname === 'localhost';
-  const CONTROL_RENDER_BUDGET = Object.freeze({
-    particles:120,
-    shockwaves:10,
-    floatingTexts:24,
-    katanaVfx:{afterimage:3, petal:8, slash:4, default:16},
-    fang:{afterimages:2, particles:48, rings:3, marks:6}
-  });
-  function controlFastRenderActive() {
-    return !!(STATE.active && window.__apexControlFastRender);
-  }
-  function installControlCanvasRenderGuards() {
-    const proto = window.CanvasRenderingContext2D?.prototype;
-    if (!proto || proto.__apexControlRenderGuards) return;
-    proto.__apexControlRenderGuards = true;
-    const nativeDrawImage = proto.drawImage;
-    const katanaFrames = new Set(window.APEX_KATANA?.frameImages || []);
-    const controlFrameCache = new WeakMap();
-    const cacheKatanaFrame = source => {
-      if (!katanaFrames.has(source) || !source?.complete || !source.naturalWidth) return null;
-      const cached = controlFrameCache.get(source);
-      if (cached) return cached;
-      const size = 384;
-      const useOffscreen = typeof OffscreenCanvas !== 'undefined';
-      const canvas = useOffscreen
-        ? new OffscreenCanvas(size, size)
-        : Object.assign(document.createElement('canvas'), {width:size, height:size});
-      const cacheCtx = canvas.getContext('2d');
-      if (!cacheCtx) return null;
-      cacheCtx.imageSmoothingEnabled = true;
-      cacheCtx.imageSmoothingQuality = 'high';
-      if (useOffscreen) cacheCtx.drawImage(source, 0, 0, size, size);
-      else nativeDrawImage.call(cacheCtx, source, 0, 0, size, size);
-      const entry = {canvas, scaleX:size / source.naturalWidth, scaleY:size / source.naturalHeight};
-      controlFrameCache.set(source, entry);
-      return entry;
-    };
-    proto.drawImage = function(source, ...args) {
-      const cached = controlFastRenderActive() ? cacheKatanaFrame(source) : null;
-      if (!cached) return nativeDrawImage.call(this, source, ...args);
-      if (args.length === 4) return nativeDrawImage.call(this, cached.canvas, ...args);
-      if (args.length === 8) {
-        const [sx, sy, sw, sh, dx, dy, dw, dh] = args;
-        return nativeDrawImage.call(this, cached.canvas, sx * cached.scaleX, sy * cached.scaleY,
-          sw * cached.scaleX, sh * cached.scaleY, dx, dy, dw, dh);
-      }
-      return nativeDrawImage.call(this, source, ...args);
-    };
-    const warmKatanaFrames = deadline => {
-      const pending = [...katanaFrames].filter(frame => !controlFrameCache.has(frame));
-      while (pending.length && (!deadline || deadline.timeRemaining() > 2)) cacheKatanaFrame(pending.shift());
-      if (pending.length) window.requestIdleCallback?.(warmKatanaFrames, {timeout:500});
-    };
-    Promise.all([...katanaFrames].map(frame => frame.decode?.().catch(() => null)))
-      .then(() => window.requestIdleCallback ? window.requestIdleCallback(warmKatanaFrames, {timeout:500}) : setTimeout(warmKatanaFrames, 0));
-    const filterDesc = Object.getOwnPropertyDescriptor(proto, 'filter');
-    if (filterDesc?.get && filterDesc?.set) {
-      Object.defineProperty(proto, 'filter', {
-        configurable:true,
-        enumerable:filterDesc.enumerable,
-        get() { return filterDesc.get.call(this); },
-        set(value) {
-          if (controlFastRenderActive() && value && value !== 'none') return filterDesc.set.call(this, 'none');
-          return filterDesc.set.call(this, value);
-        }
-      });
-    }
-    const shadowDesc = Object.getOwnPropertyDescriptor(proto, 'shadowBlur');
-    if (shadowDesc?.get && shadowDesc?.set) {
-      Object.defineProperty(proto, 'shadowBlur', {
-        configurable:true,
-        enumerable:shadowDesc.enumerable,
-        get() { return shadowDesc.get.call(this); },
-        set(value) {
-          const blur = Number(value) || 0;
-          return shadowDesc.set.call(this, controlFastRenderActive() ? Math.min(blur, 4) : blur);
-        }
-      });
-    }
-  }
-  function keepNewest(array, max) {
-    if (!Array.isArray(array) || array.length <= max) return;
-    array.splice(0, array.length - max);
-  }
-  function keepNewestByType(array, caps) {
-    if (!Array.isArray(array) || !caps) return;
-    const counts = {};
-    const kept = [];
-    for (let i = array.length - 1; i >= 0; i -= 1) {
-      const item = array[i];
-      const type = item?.type || 'default';
-      const max = caps[type] ?? caps.default ?? Infinity;
-      counts[type] = (counts[type] || 0) + 1;
-      if (counts[type] <= max) kept.push(item);
-    }
-    kept.reverse();
-    if (kept.length !== array.length) array.splice(0, array.length, ...kept);
-  }
-  function applyControlRenderBudget() {
-    if (!STATE.active) return;
-    keepNewest(particles, CONTROL_RENDER_BUDGET.particles);
-    keepNewest(shockwaves, CONTROL_RENDER_BUDGET.shockwaves);
-    keepNewest(floatingTexts, CONTROL_RENDER_BUDGET.floatingTexts);
-    const katana = window.APEX_KATANA?.state;
-    keepNewestByType(katana?.vfx, CONTROL_RENDER_BUDGET.katanaVfx);
-    const fang = window.APEX_FANG?.state;
-    keepNewest(fang?.afterimages, CONTROL_RENDER_BUDGET.fang.afterimages);
-    keepNewest(fang?.particles, CONTROL_RENDER_BUDGET.fang.particles);
-    keepNewest(fang?.rings, CONTROL_RENDER_BUDGET.fang.rings);
-    keepNewest(fang?.marks, CONTROL_RENDER_BUDGET.fang.marks);
-  }
-  installControlCanvasRenderGuards();
   function perfFreshSample() {
     const katana = window.APEX_KATANA?.state || {};
     const vfx = katana.vfx || [];
@@ -715,6 +604,12 @@
     if (event.button === 0) input.held.delete(ACTIONS.PRIMARY);
     if (event.button === 2) input.held.delete(ACTIONS.SECONDARY);
   }
+  function releasePointerInput() {
+    input.pointerInside = false;
+    input.held.delete(ACTIONS.PRIMARY);
+    input.held.delete(ACTIONS.SECONDARY);
+    pendingPointer = null;
+  }
   function releaseHeldInput() {
     input.clear();
     const f = STATE.localFighter;
@@ -727,9 +622,7 @@
   window.addEventListener('blur', releaseHeldInput);
   document.addEventListener('visibilitychange', () => { if (document.hidden) releaseHeldInput(); });
   canvas.addEventListener('pointerdown', onPointerDown, true);
-  canvas.addEventListener('pointerleave', () => {
-    releaseHeldInput();
-  });
+  canvas.addEventListener('pointerleave', releasePointerInput);
   canvas.addEventListener('contextmenu', event => { if (input.active) event.preventDefault(); });
   canvas.tabIndex = canvas.tabIndex >= 0 ? canvas.tabIndex : 0;
 
@@ -2721,17 +2614,36 @@
     document.body.classList.remove('apex-control-camera');
     window.__apexCameraView = {shakeX:0,shakeY:0,zoom:1};
   }
+  function renderManualSkillMap(f) {
+    const host=document.getElementById('manual-skill-map');
+    if(!host)return;
+    const mapping=window.APEX_CONTROL_SKILLS?.mappingFor?.(f?.name)||[];
+    host.classList.toggle('hidden',!mapping.length);
+    if(!mapping.length){host.replaceChildren();delete host.dataset.fighter;return;}
+    if(host.dataset.fighter===f.name)return;
+    host.dataset.fighter=f.name;host.replaceChildren();
+    for(const skill of mapping){
+      const card=document.createElement('div');card.className='manual-skill-slot';
+      const key=document.createElement('b');key.textContent=skill.key;
+      const name=document.createElement('strong');name.textContent=skill.name;
+      const detail=document.createElement('span');detail.textContent=`${skill.cd>0?`CD ${skill.cd}s · `:''}${skill.detail}`;
+      card.append(key,name,detail);host.appendChild(card);
+    }
+  }
   function updateHud() {
     const panel = document.getElementById('manual-lab-hud');
     if (!panel) return;
     const local = STATE.active && STATE.localFighter?.hp > 0 ? STATE.localFighter : null;
-    const supported = local?.name === 'ENGINEER' || local?.name === 'KATANA';
+    const supported = supportedManualFighter(local);
     panel.classList.toggle('hidden', !supported);
+    renderManualSkillMap(supported?local:null);
     if (!supported) return;
     const isKatana = local.name === 'KATANA';
-    panel.querySelector('.manual-engineer-hud')?.classList.toggle('hidden', isKatana);
+    const isEngineer = local.name === 'ENGINEER';
+    panel.querySelector('.manual-engineer-hud')?.classList.toggle('hidden', !isEngineer);
     panel.querySelector('.manual-katana-hud')?.classList.toggle('hidden', !isKatana);
-    panel.querySelector('.manual-lab-keys')?.classList.toggle('hidden', isKatana);
+    const keyGuide = panel.querySelector('.manual-lab-keys');
+    keyGuide?.classList.toggle('hidden', isKatana);
     if (isKatana) {
       const h = window.APEX_KATANA?.manualApi?.hudState?.(local);
       const title = panel.querySelector('.manual-lab-title');
@@ -2749,6 +2661,16 @@
       }
       return;
     }
+    if (!isEngineer) {
+      const h = window.APEX_CONTROL_SKILLS?.hudState?.(local);
+      const title = panel.querySelector('.manual-lab-title');
+      if (title) title.textContent = `APEX CONTROL · ${local.name}`;
+      if (keyGuide) keyGuide.textContent = h?.line || 'WASD MOVE · MOUSE AIM · LMB/RMB/Q/E/R SKILLS';
+      const status = document.getElementById('manual-status');
+      if (status) { status.textContent = h?.last || 'READY'; status.classList.toggle('invalid', !!h?.failed); }
+      return;
+    }
+    if (keyGuide) keyGuide.textContent = 'WASD MOVE · MOUSE AIM · LMB BUILD/FIRE · RMB MAGNET · Q/E BLUEPRINT · SPACE MERGE · R WAR MACHINE';
     const f = currentEngineer();
     if (!f) return;
     const api = engineerApi();
@@ -2786,7 +2708,7 @@
   }
 
   function supportedManualFighter(f) {
-    return f?.name === 'ENGINEER' || f?.name === 'KATANA';
+    return !!f && (f.name === 'ENGINEER' || f.name === 'KATANA' || window.APEX_CONTROL_SKILLS?.supported?.has(f.name));
   }
   function createRemoteInputState() {
     return {
@@ -2868,8 +2790,15 @@
       const kinds = engineerBlueprintKinds(api);
       manual.selectedBlueprint = ((manual.selectedBlueprint % kinds.length) + kinds.length) % kinds.length;
       if (manual.isLocal) STATE.selectedBlueprint = manual.selectedBlueprint;
+      const aim = source.pointerInside && source.aimPoint ? norm(source.aimPoint.x - f.x, source.aimPoint.y - f.y) : null;
       const move = source.moveVector;
-      if ((move.x || move.y) && (!life || life.canMove)) f.setDir(move.x, move.y);
+      f.data ||= {};
+      f.data.apexControlManualMove = (move.x || move.y) && (!life || life.canMove) ? {x:move.x, y:move.y} : {x:0, y:0};
+      f.data.apexControlManualAimDir = aim && (aim.x || aim.y) ? {x:aim.x, y:aim.y} : {x:f.dir?.x || 1, y:f.dir?.y || 0};
+      f.data.apexControlManualBaseLock = true;
+      f.data.apexControlManualActionLock = false;
+      f.data.positionLocked = true;
+      if (aim && (aim.x || aim.y)) f.setDir(aim.x, aim.y);
       if (life && (!life.canAttack || !life.canDealDamage)) {
         source.pressed.clear();
         api.setMagnetRequested(f, false);
@@ -2935,16 +2864,21 @@
           wm.y = before.y;
         }
         wm.dir = {x:move.x,y:move.y};
-        f.setDir(move.x,move.y);
         stabilizeEngineerPilotState(f, wm);
       }
+      const aimDir = source.pointerInside ? norm(source.aimPoint.x - wm.x, source.aimPoint.y - wm.y) : null;
+      if (aimDir && (aimDir.x || aimDir.y)) f.setDir(aimDir.x, aimDir.y);
+      f.data ||= {};
+      f.data.apexControlManualMove = {x:0, y:0};
+      f.data.apexControlManualAimDir = aimDir && (aimDir.x || aimDir.y) ? {x:aimDir.x, y:aimDir.y} : {x:f.dir?.x || 1, y:f.dir?.y || 0};
+      f.data.apexControlManualBaseLock = true;
+      f.data.apexControlManualActionLock = true;
       if (life && (!life.canAttack || !life.canDealDamage)) {
         source.pressed.clear();
         if (manual.isLocal) updateHud();
         return;
       }
       const target = controlWarMachineAimTarget(f, wm, source.aimPoint, enemy);
-      const aimDir = source.pointerInside ? norm(source.aimPoint.x - wm.x, source.aimPoint.y - wm.y) : null;
       if (aimDir && (aimDir.x || aimDir.y)) wm.aimAngle = Math.atan2(aimDir.y, aimDir.x) - Math.PI / 2;
       if (target && source.isHeld(ACTIONS.PRIMARY) && !engineerHasActiveConstruction(f) && manual.warLaserCooldown <= 0) {
         wm.aimAngle = Math.atan2(target.y - wm.y, target.x - wm.x) - Math.PI / 2;
@@ -3055,6 +2989,83 @@
     return (STATE.creeps || []).filter(c => c.hp > 0 && dist(f.x,f.y,c.x,c.y) <= maxDistance && hasLineOfSight(f, c, 18))
       .sort((a,b) => dist(f.x,f.y,a.x,a.y) - dist(f.x,f.y,b.x,b.y))[0] || null;
   }
+  function botCombatProfile(name) {
+    const profiles = {
+      ENGINEER:{ideal:650,min:430,engage:930,farm:520},
+      STRING:{ideal:600,min:360,engage:900,farm:560},
+      ICE:{ideal:540,min:330,engage:860,farm:500},
+      GALAXY:{ideal:520,min:300,engage:850,farm:520},
+      SHOTGUN:{ideal:360,min:190,engage:720,farm:380},
+      NINJA:{ideal:330,min:155,engage:760,farm:360},
+      FANG:{ideal:285,min:135,engage:780,farm:330},
+      SOCCER:{ideal:340,min:180,engage:760,farm:390},
+      KATANA:{ideal:300,min:150,engage:720,farm:340}
+    };
+    return profiles[name] || {ideal:420,min:220,engage:760,farm:420};
+  }
+  function botShouldFightPlayer(p2, p1) {
+    if (!p2 || !p1 || p1.hp <= 0 || !botCanSeePlayer(p2, p1)) return false;
+    const hpRatio = p2.hp / Math.max(1, p2.maxHp);
+    const profile = botCombatProfile(p2.name);
+    if (hpRatio < .32 && !getHealEffect('p2')?.rate) return false;
+    return dist(p2.x,p2.y,p1.x,p1.y) <= profile.engage;
+  }
+  function botSkillForChampion(p2, p1, fightDistance, hpRatio) {
+    const name = p2?.name;
+    if (!p1 || !Number.isFinite(fightDistance)) return ACTIONS.PRIMARY;
+    if (name === 'SHOTGUN') {
+      if (fightDistance >= 680 && fightDistance <= 840) return ACTIONS.SECONDARY;
+      if (fightDistance <= 230) return ACTIONS.ABILITY_1;
+      if (hpRatio < .55 || Math.random() < .22) return ACTIONS.APEX;
+      return ACTIONS.PRIMARY;
+    }
+    if (name === 'FANG') {
+      if (fightDistance > 350) return ACTIONS.SECONDARY;
+      if (Math.random() < .34) return ACTIONS.ABILITY_2;
+      if (Math.random() < .55) return ACTIONS.ABILITY_1;
+      return ACTIONS.APEX;
+    }
+    if (name === 'GALAXY') {
+      if (hpRatio < .55 && Math.random() < .45) return ACTIONS.ABILITY_1;
+      if (fightDistance < 720 && Math.random() < .42) return ACTIONS.ABILITY_2;
+      if (fightDistance < 880 && Math.random() < .7) return ACTIONS.SECONDARY;
+      return ACTIONS.APEX;
+    }
+    if (name === 'ICE') {
+      if (fightDistance < 720 && Math.random() < .42) return ACTIONS.ABILITY_1;
+      if (Math.random() < .45) return ACTIONS.SECONDARY;
+      if (hpRatio < .62 || Math.random() < .22) return ACTIONS.ABILITY_2;
+      return ACTIONS.APEX;
+    }
+    if (name === 'NINJA') {
+      if (fightDistance > 500) return Math.random() < .55 ? ACTIONS.SECONDARY : ACTIONS.ABILITY_1;
+      if (fightDistance < 620 && Math.random() < .5) return ACTIONS.ABILITY_2;
+      return ACTIONS.APEX;
+    }
+    if (name === 'SOCCER') {
+      if (!p2.data?.soccerPossessionActive) return ACTIONS.ABILITY_1;
+      if (fightDistance < 580 && Math.random() < .38) return ACTIONS.ABILITY_2;
+      if (Math.random() < .42) return ACTIONS.SECONDARY;
+      return ACTIONS.APEX;
+    }
+    if (name === 'STRING') {
+      if (fightDistance > 520 && Math.random() < .5) return ACTIONS.SECONDARY;
+      if (fightDistance < 760 && Math.random() < .35) return ACTIONS.ABILITY_1;
+      if (Math.random() < .32) return ACTIONS.ABILITY_2;
+      return ACTIONS.APEX;
+    }
+    if (name === 'KATANA') {
+      if (fightDistance > 390) return ACTIONS.ABILITY_1;
+      if (Math.random() < .45) return ACTIONS.SECONDARY;
+      return ACTIONS.APEX;
+    }
+    if (name === 'ENGINEER') {
+      if (Math.random() < .45) return ACTIONS.APEX;
+      if (Math.random() < .5) return ACTIONS.SECONDARY;
+      return ACTIONS.ABILITY_2;
+    }
+    return Math.random() < .5 ? ACTIONS.ABILITY_1 : ACTIONS.ABILITY_2;
+  }
   function chooseBotObjective(bot, p2, p1) {
     const territories = STATE.territories || {};
     chooseBotUpgradeIfPending();
@@ -3067,9 +3078,6 @@
     const p2Level = levelState('p2')?.level || 1;
     const p1Level = levelState('p1')?.level || 1;
     const farmTarget = nearestCreepForPlayer(p2, 1150);
-    if ((p2Level < Math.min(5, p1Level + 1) || (p2.hp / Math.max(1,p2.maxHp) < .55 && !ownedHeal)) && farmTarget) {
-      return {state:'FARM_CREEP', objective:`farm ${farmTarget.id}`, territory:null, point:{x:farmTarget.x,y:farmTarget.y}, creepId:farmTarget.id};
-    }
     if (STATE.dominance?.active && STATE.dominance.playerId === 'p1') {
       const critical = Object.values(territories).filter(t => t.owner === 'p1')
         .sort((a,b) => dist(p2.x,p2.y,captureTargetPoint(a.roomId).x,captureTargetPoint(a.roomId).y) - dist(p2.x,p2.y,captureTargetPoint(b.roomId).x,captureTargetPoint(b.roomId).y))[0];
@@ -3085,6 +3093,7 @@
     if (ownedHeal && p2.hp / Math.max(1,p2.maxHp) < .42) {
       return {state:'RETREAT_TO_HEAL', objective:`retreat heal ${ownedHeal.roomId}`, territory:ownedHeal.roomId};
     }
+    if (botShouldFightPlayer(p2, p1)) return {state:'FIGHT_PLAYER', objective:'pressure visible player', territory:null, point:{x:p1.x,y:p1.y}};
     const p1Owned = Object.values(territories).filter(t => t.owner === 'p1');
     if (p1Owned.length >= 2) {
       const target = p1Owned.sort((a,b) => dist(p2.x,p2.y,captureTargetPoint(a.roomId).x,captureTargetPoint(a.roomId).y) - dist(p2.x,p2.y,captureTargetPoint(b.roomId).x,captureTargetPoint(b.roomId).y))[0];
@@ -3101,8 +3110,11 @@
       return {state:'STEAL_ENEMY_TERRITORY', objective:`steal ${target.roomId}`, territory:target.roomId};
     }
     if (ownedRage && isFighterInEffectRoom(p2, ownedRage.roomId) && p1 && dist(p2.x,p2.y,p1.x,p1.y) < 650) return {state:'FIGHT_PLAYER', objective:'fight with rage', territory:null};
+    if ((p2Level < Math.min(5, p1Level + 1) || (p2.hp / Math.max(1,p2.maxHp) < .55 && !ownedHeal)) && farmTarget) {
+      return {state:'FARM_CREEP', objective:`farm ${farmTarget.id}`, territory:null, point:{x:farmTarget.x,y:farmTarget.y}, creepId:farmTarget.id};
+    }
     if (farmTarget) return {state:'FARM_CREEP', objective:`farm ${farmTarget.id}`, territory:null, point:{x:farmTarget.x,y:farmTarget.y}, creepId:farmTarget.id};
-    if (p1 && dist(p2.x,p2.y,p1.x,p1.y) < 520) return {state:'FIGHT_PLAYER', objective:'fight player', territory:null};
+    if (p1 && botCanSeePlayer(p2,p1) && dist(p2.x,p2.y,p1.x,p1.y) < botCombatProfile(p2.name).engage) return {state:'FIGHT_PLAYER', objective:'fight player', territory:null, point:{x:p1.x,y:p1.y}};
     return {state:'PATROL_NEUTRAL', objective:'patrol neutral', territory:null, point:worldCenter()};
   }
   function setBotRoute(bot, p2) {
@@ -3136,7 +3148,8 @@
       bot.reevaluate = bot.difficulty === 'hard' ? .25 : bot.difficulty === 'easy' ? .65 : .4;
       if (changed || !bot.route?.length) setBotRoute(bot, p2);
     }
-    if (p1 && bot.canSeePlayer && dist(p2.x,p2.y,p1.x,p1.y) < 430) {
+    const profile = botCombatProfile(p2.name);
+    if (p1 && bot.canSeePlayer && dist(p2.x,p2.y,p1.x,p1.y) < profile.engage) {
       const p1Corner = isInsideCaptureCorner({x:p1.x,y:p1.y});
       const p2Corner = isInsideCaptureCorner({x:p2.x,y:p2.y});
       if (p1Corner && p1Corner === p2Corner) bot.state = 'CONTEST_PLAYER';
@@ -3156,22 +3169,36 @@
       bot.routeIndex += 1;
       bot.targetWaypoint = bot.route[bot.routeIndex];
     }
-    const holdCorner = bot.targetTerritory && isInsideCaptureCorner({x:p2.x,y:p2.y}) === bot.targetTerritory;
+    const territory = bot.targetTerritory ? STATE.territories?.[bot.targetTerritory] : null;
+    const holdCorner = bot.targetTerritory && isInsideCaptureCorner({x:p2.x,y:p2.y}) === bot.targetTerritory
+      && (!territory || territory.owner !== 'p2' || territory.actor === 'p1' || bot.state === 'DEFEND_OWN_TERRITORY' || bot.state === 'CONTEST_PLAYER');
     const fightDistance = p1 ? dist(p2.x,p2.y,p1.x,p1.y) : Infinity;
     let moveTarget = holdCorner ? p2 : (bot.targetWaypoint || bot.targetPoint);
-    if (bot.state === 'FIGHT_PLAYER' && p1) moveTarget = fightDistance > 260 ? p1 : p2;
+    let tacticalMove = null;
+    if ((bot.state === 'FIGHT_PLAYER' || bot.state === 'CONTEST_PLAYER') && p1) {
+      if (!bot.canSeePlayer) moveTarget = bot.targetWaypoint || bot.targetPoint || p1;
+      else if (fightDistance > profile.ideal * 1.12) tacticalMove = norm(p1.x - p2.x, p1.y - p2.y);
+      else if (fightDistance < profile.min) tacticalMove = norm(p2.x - p1.x, p2.y - p1.y);
+      else {
+        const side = ((Math.floor(matchClock * 1.7) + p2.id) % 2) ? 1 : -1;
+        const toward = norm(p1.x - p2.x, p1.y - p2.y);
+        tacticalMove = norm(-toward.y * side + toward.x * .18, toward.x * side + toward.y * .18);
+      }
+      moveTarget = p1;
+    }
     if (bot.state === 'FARM_CREEP') {
       const creep = (STATE.creeps || []).find(c => c.id === bot.creepId && c.hp > 0) || nearestCreepForPlayer(p2, 1200);
       if (creep) {
         bot.targetPoint = {x:creep.x,y:creep.y};
-        moveTarget = dist(p2.x,p2.y,creep.x,creep.y) > 185 ? creep : p2;
+        moveTarget = dist(p2.x,p2.y,creep.x,creep.y) > profile.farm ? creep : p2;
       }
     }
     if (bot.state === 'RETREAT_TO_HEAL') moveTarget = bot.targetPoint || captureTargetPoint('p2Base');
-    const mv = holdCorner && fightDistance < 380
-      ? norm((p2.x - (p1?.x || p2.x)) * .18 + (bot.targetPoint.x - p2.x), (p2.y - (p1?.y || p2.y)) * .18 + (bot.targetPoint.y - p2.y))
-      : norm(moveTarget.x - p2.x, moveTarget.y - p2.y);
-    remoteInput.moveVector = (holdCorner && fightDistance > 520) || distanceToWaypoint < 20 ? {x:0,y:0} : mv;
+    const cornerPoint = bot.targetPoint || (bot.targetTerritory ? captureTargetPoint(bot.targetTerritory) : null) || p2;
+    const mv = tacticalMove || (holdCorner && fightDistance < 380
+      ? norm((p2.x - (p1?.x || p2.x)) * .18 + (cornerPoint.x - p2.x), (p2.y - (p1?.y || p2.y)) * .18 + (cornerPoint.y - p2.y))
+      : norm(moveTarget.x - p2.x, moveTarget.y - p2.y));
+    remoteInput.moveVector = (holdCorner && fightDistance > profile.engage) || (!tacticalMove && distanceToWaypoint < 20) ? {x:0,y:0} : mv;
     if (remoteInput.moveVector.x || remoteInput.moveVector.y) {
       remoteInput.held.add('BOT_MOVE');
       bot.action = holdCorner ? 'capture' : 'move';
@@ -3189,17 +3216,17 @@
         remoteInput.pressed.add(ACTIONS.PRIMARY);
         bot.attackPulse = .32;
       }
-    } else if (p1 && bot.canSeePlayer && fightDistance < 560) {
+    } else if (p1 && bot.canSeePlayer && fightDistance < profile.engage) {
       remoteInput.held.add(ACTIONS.PRIMARY);
       bot.action = bot.state === 'CONTEST_PLAYER' ? 'contest+attack' : 'attack';
       if (bot.attackPulse <= 0) {
         remoteInput.pressed.add(ACTIONS.PRIMARY);
-        bot.attackPulse = bot.difficulty === 'easy' ? .65 : bot.difficulty === 'hard' ? .24 : .38;
+        bot.attackPulse = bot.difficulty === 'easy' ? .62 : bot.difficulty === 'hard' ? .20 : .34;
       }
       if (bot.skillTimer <= 0) {
-        const roll = Math.random();
-        pressBotAction(remoteInput, roll < .45 ? ACTIONS.ABILITY_1 : roll < .8 ? ACTIONS.ABILITY_2 : ACTIONS.APEX);
-        bot.skillTimer = bot.difficulty === 'easy' ? 2.4 : bot.difficulty === 'hard' ? .95 : 1.45;
+        const hpRatio = p2.hp / Math.max(1, p2.maxHp);
+        pressBotAction(remoteInput, botSkillForChampion(p2, p1, fightDistance, hpRatio));
+        bot.skillTimer = bot.difficulty === 'easy' ? 2.1 : bot.difficulty === 'hard' ? .82 : 1.28;
         bot.action += '+skill';
       }
     }
@@ -3222,6 +3249,124 @@
     if (isBlockedCircle(p2.x,p2.y,p2.radius || CONTROL_CONFIG.championRadius) || segmentIntersectsWall(before, {x:p2.x,y:p2.y}, Math.min(42, (p2.radius || 70) * .45))) {
       p2.x = before.x;
       p2.y = before.y;
+    }
+  }
+  function normalizeManualVector(v) {
+    if (!v || !Number.isFinite(v.x) || !Number.isFinite(v.y)) return {x:0,y:0};
+    const len = Math.hypot(v.x, v.y);
+    return len > 0 ? {x:v.x/len, y:v.y/len} : {x:0,y:0};
+  }
+  function manualAimDir(f, manual) {
+    const aim = manual?.getAimPoint?.();
+    if (aim && manual?.hasAimPoint?.() && Number.isFinite(aim.x) && Number.isFinite(aim.y)) {
+      const n = norm(aim.x - f.x, aim.y - f.y);
+      if (n.x || n.y) return n;
+    }
+    const remembered = f?.data?.apexControlManualAimDir;
+    if (remembered && Number.isFinite(remembered.x) && Number.isFinite(remembered.y)) {
+      const n = norm(remembered.x, remembered.y);
+      if (n.x || n.y) return n;
+    }
+    return norm(f?.dir?.x || 1, f?.dir?.y || 0);
+  }
+  function faceManualAim(f, manual) {
+    const aim = manualAimDir(f, manual);
+    if (!aim.x && !aim.y) return;
+    f.setDir?.(aim.x, aim.y);
+    f.data ||= {};
+    f.data.apexControlManualAimDir = {x:aim.x, y:aim.y};
+    if (f.name === 'SOCCER') window.APEX_SOCCER?.manualApi?.setForward?.(f, aim.x, aim.y);
+    if (f.name === 'KATANA' && f.data.katana) f.data.katana.visualDir = {x:aim.x, y:aim.y};
+    if (f.name === 'FANG' && f.data.fang && !f.data.fang.action) f.data.fang.visualDir = {x:aim.x, y:aim.y};
+    if (f.name === 'SHOTGUN' && f.data.shotgun) {
+      f.data.shotgun.visualDir = {x:aim.x, y:aim.y};
+      f.data.shotgun.visualAngle = Math.atan2(aim.y, aim.x);
+    }
+  }
+  function manualMoveVectorFor(f, manual) {
+    const remembered = f?.data?.apexControlManualMove;
+    return normalizeManualVector(remembered || manual?.getMoveVector?.());
+  }
+  function manualMovementActionLocked(f) {
+    const d = f?.data || {};
+    if (d.apexControlManualActionLock) return true;
+    if (d.galaxyRemoved || d.soccerPenaltyCinematicActive || d.soccerChaseDownActive) return true;
+    if (['BLUEHOLE','DIVINE','IMPACT'].includes(d.galaxyState)) return true;
+    const shotgun = d.shotgun;
+    if (shotgun?.hookSequence || shotgun?.counterMotion || d.shotgunKnockback) return true;
+    const fang = d.fang;
+    if (fang?.action || fang?.state === 'HOWL_48') return true;
+    const katana = d.katana, manual = katana?.manual;
+    if (katana?.action || manual?.qDash || manual?.rewrite || manual?.rCharge) return true;
+    if (f?.name === 'ENGINEER' && window.APEX_ENGINEER?.ownerData?.(f)?.pilotingWarMachine) return true;
+    return false;
+  }
+  function manualMovementBlocked(f, manual) {
+    if (!STATE.active || !f || !manual?.active || manual.mode !== 'MANUAL_LAB' || f.hp <= 0) return true;
+    const owner = fighterPlayerId(f);
+    const life = owner ? lifecycleForPlayer(owner) : null;
+    if (STATE.match?.state === 'ended' || life?.dead || life?.canMove === false) return true;
+    if (f.hardCC?.()) return true;
+    return manualMovementActionLocked(f);
+  }
+  function manualPushDelta(f, dt) {
+    const push = f?.statuses?.push;
+    if (!push || !Number.isFinite(push.x) || !Number.isFinite(push.y)) return {x:0,y:0};
+    const t = clamp((push.timer || 0) / Math.max(.001, push.max || push.timer || 1), 0, 1);
+    const strength = Number.isFinite(push.strength) ? push.strength : 0;
+    return {x:push.x * strength * t * dt, y:push.y * strength * t * dt};
+  }
+  function tryManualMoveStep(f, before, delta) {
+    const r = f.radius || CONTROL_CONFIG.championRadius;
+    const target = {
+      x:clampWorldX(before.x + delta.x, r),
+      y:clampWorldY(before.y + delta.y, r)
+    };
+    const clearance = Math.min(42, r * .45);
+    const valid = p => !isBlockedCircle(p.x, p.y, r) && !segmentIntersectsWall(before, p, clearance);
+    if (valid(target)) {
+      f.x = target.x;
+      f.y = target.y;
+      return true;
+    }
+    const slideX = {x:target.x, y:before.y};
+    if (valid(slideX)) {
+      f.x = slideX.x;
+      f.y = slideX.y;
+      return true;
+    }
+    const slideY = {x:before.x, y:target.y};
+    if (valid(slideY)) {
+      f.x = slideY.x;
+      f.y = slideY.y;
+      return true;
+    }
+    f.x = before.x;
+    f.y = before.y;
+    return false;
+  }
+  function applyManualControlMovement(dt) {
+    if (!STATE.active || !Array.isArray(fighters)) return;
+    for (const f of fighters) {
+      const manual = f?.data?.manualController;
+      if (!manual?.active || manual.mode !== 'MANUAL_LAB') continue;
+      faceManualAim(f, manual);
+      const move = manualMoveVectorFor(f, manual);
+      if (manualMovementBlocked(f, manual)) continue;
+      const before = {x:f.x, y:f.y};
+      const speed = (f.baseSpeed || CONTROL_CONFIG.playerSpeed || 450) * (f.speedMult?.() || 1);
+      const push = manualPushDelta(f, dt);
+      const delta = {
+        x:(speed > 0 ? move.x * speed * dt : 0) + push.x,
+        y:(speed > 0 ? move.y * speed * dt : 0) + push.y
+      };
+      if (!delta.x && !delta.y) continue;
+      const moved = tryManualMoveStep(f, before, delta);
+      if (moved) {
+        resolveControlMovement(f, before);
+        f.data.apexControlLastManualMove = {from:before, to:{x:f.x,y:f.y}, t:matchClock};
+      }
+      faceManualAim(f, manual);
     }
   }
 
@@ -3993,6 +4138,30 @@
       }
     }
   }
+  function cleanupControlTransientProjectiles() {
+    if (!STATE.active || !Array.isArray(projectiles)) return;
+    for (let i = projectiles.length - 1; i >= 0; i -= 1) {
+      const p = projectiles[i];
+      if (!p) {
+        projectiles.splice(i, 1);
+        continue;
+      }
+      const lifeExpired = Number.isFinite(p.life) && p.life <= 0;
+      const customExpired = p.apexCustom && Number.isFinite(p.customLife) && p.customLife <= 0;
+      const impossibleCustom = p.apexCustom && p.life === Infinity && !Number.isFinite(p.customLife);
+      if (p._dead || lifeExpired || customExpired || impossibleCustom) projectiles.splice(i, 1);
+    }
+  }
+  function updateControlChampionVfx(dt) {
+    if (!STATE.active) return;
+    const start = perfNow();
+    window.APEX_SHOTGUN?.updateVfx?.(dt);
+    PERF.vfxUpdateTimeSum += perfNow() - start;
+  }
+  function drawControlChampionVfx(localCtx) {
+    if (!STATE.active) return;
+    window.APEX_SHOTGUN?.drawVfx?.(localCtx);
+  }
   function drawTerritoryProgress(localCtx) {
     if (!STATE.territories) return;
     const debug = STATE.debug || {};
@@ -4051,8 +4220,6 @@
     if (!STATE.active) return previousDrawControl();
     const renderStart = perfNow();
     applyControlWorld();
-    // Bosses and Control-specific systems can emit VFX after the main engine update.
-    applyControlRenderBudget();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
@@ -4063,7 +4230,6 @@
     const view = computeControlCamera();
     window.__apexCameraView = view;
     ctx.save();
-    window.__apexControlFastRender = true;
     try {
       ctx.translate(view.shakeX, view.shakeY);
       ctx.scale(view.zoom, view.zoom);
@@ -4073,7 +4239,9 @@
       drawTerritoryProgress(ctx);
       drawBotDebugWorld(ctx);
       window.__apexRenderFrame = (window.__apexRenderFrame || 0) + 1;
+      window.__apexControlDrawFrameKey = (window.__apexControlDrawFrameKey || 0) + 1;
       drawProjectiles(ctx);
+      drawControlChampionVfx(ctx);
       drawControlCustomProjectiles(ctx);
       drawControlCreeps(ctx);
       drawNeutralTurrets(ctx);
@@ -4095,6 +4263,7 @@
       if (fighters[0]) fighters[0].draw(ctx);
       if (fighters[1]) fighters[1].draw(ctx);
       for (const f of (fighters || []).slice(2)) if (f && f.hp > 0) f.draw(ctx);
+      if (typeof window.__apexTopLayerDraw === 'function') window.__apexTopLayerDraw(ctx);
       drawBossHpBars(ctx);
       for (const f of fighters) {
         if (f && f.name === 'SNIPER' && f.data && f.data.aim > 0) {
@@ -4118,7 +4287,6 @@
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
       ctx.filter = 'none';
-      window.__apexControlFastRender = false;
     }
     drawDebugPanel(ctx, view);
     drawRespawnStatus(ctx);
@@ -4137,6 +4305,7 @@
       : null;
     if (STATE.active) {
       updateBotController(dt);
+      window.__apexControlUpdateFrameKey = (window.__apexControlUpdateFrameKey || 0) + 1;
       const p2 = fighters?.[1];
       if (p2 && p2.data?.manualController !== remoteController && remoteInput.moveVector && (remoteInput.moveVector.x || remoteInput.moveVector.y)) {
         p2.setDir(remoteInput.moveVector.x, remoteInput.moveVector.y);
@@ -4144,7 +4313,8 @@
     }
     const result = previousUpdateManualLab(dt);
     if (STATE.active) {
-      applyControlRenderBudget();
+      updateControlChampionVfx(dt);
+      applyManualControlMovement(dt);
       applyBotFallbackMovement(dt, beforePositions?.[1]);
       const projectileStart = perfNow();
       enforceProjectileWallBlocking(dt);
@@ -4163,6 +4333,7 @@
       }
       PERF.collisionTimeSum += perfNow() - collisionStart;
       enforceNoPersistentZones();
+      cleanupControlTransientProjectiles();
       updateTerritories(dt);
       updateTerritoryEffects(dt);
       updateDominance(dt);
@@ -4194,6 +4365,21 @@
       t:matchClock,
       gameState,
       localSlot:STATE.localSlot,
+      match:STATE.match ? {
+        state:STATE.match.state,
+        elapsed:STATE.match.elapsed,
+        timeLeft:STATE.match.timeLeft,
+        p1Score:STATE.match.p1Score,
+        p2Score:STATE.match.p2Score
+      } : null,
+      territories:Object.fromEntries(Object.entries(STATE.territories || {}).map(([id, t]) => [id, {
+        owner:t.owner || null,
+        actor:t.actor || null,
+        captureProgress:t.captureProgress || 0,
+        stealProgress:t.stealProgress || 0,
+        contested:!!t.contested,
+        disabled:!!t.disabled
+      }])),
       fighters:(fighters || []).map(f => f ? ({
         id:f.id,name:f.name,x:f.x,y:f.y,hp:f.hp,maxHp:f.maxHp,dir:{...f.dir},
         damageDone:f.damageDone,dead:f.hp<=0
@@ -4215,6 +4401,23 @@
       if (Number.isFinite(src.hp)) f.hp = clamp(src.hp, 0, f.maxHp || src.maxHp || 1000);
       if (Number.isFinite(src.damageDone)) f.damageDone = src.damageDone;
     });
+    if (snapshot.match && STATE.match) {
+      for (const key of ['state','elapsed','timeLeft','p1Score','p2Score']) {
+        if (snapshot.match[key] !== undefined) STATE.match[key] = snapshot.match[key];
+      }
+    }
+    if (snapshot.territories && STATE.territories) {
+      for (const [id, src] of Object.entries(snapshot.territories)) {
+        const t = STATE.territories[id];
+        if (!t || !src) continue;
+        t.owner = src.owner || null;
+        t.actor = src.actor || null;
+        t.captureProgress = Number.isFinite(src.captureProgress) ? src.captureProgress : 0;
+        t.stealProgress = Number.isFinite(src.stealProgress) ? src.stealProgress : 0;
+        t.contested = !!src.contested;
+        t.disabled = !!src.disabled;
+      }
+    }
     updateHUD();
     return true;
   }
