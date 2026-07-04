@@ -5282,3 +5282,21 @@ body.manual-lab-select #select-screen:not(.hidden) #manual-room-panel {
     cursor: not-allowed;
     filter: saturate(.45) brightness(.72);
 }
+
+.multiplayer-debug-overlay {
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
+    z-index: 110;
+    width: min(330px, calc(100vw - 24px));
+    padding: 10px 12px;
+    border: 1px solid rgba(87, 220, 240, .45);
+    background: rgba(2, 8, 13, .88);
+    box-shadow: 0 8px 30px rgba(0,0,0,.5), inset 0 0 20px rgba(70,210,235,.05);
+    color: #a8eaf2;
+    pointer-events: none;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.multiplayer-debug-overlay.hidden { display: none; }
+.multiplayer-debug-overlay b { display:block; margin-bottom:6px; color:#f4dda0; font-size:.66rem; letter-spacing:.13em; }
+.multiplayer-debug-overlay pre { margin:0; color:#b9c9cc; font:700 .58rem/1.42 inherit; white-space:pre-wrap; }

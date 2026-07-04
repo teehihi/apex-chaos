@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-03T17:24:02.420Z",
+  "generatedAt": "2026-07-04T14:01:11.234Z",
   "loadingAssets": {
     "bgPortrait": "/assets/loading/loading-bg-portrait.webp",
     "bgLandscape": "/assets/loading/loading-bg-landscape.webp",
@@ -10,7 +10,7 @@
     {
       "path": "/apexEngine.js",
       "type": "script",
-      "bytes": 226280
+      "bytes": 226297
     },
     {
       "path": "/assets/arcade_v1/normalized/battle_idle_reference.webp",
@@ -3018,6 +3018,11 @@
       "bytes": 13318
     },
     {
+      "path": "/game/network/apexRealtimeMultiplayer.js",
+      "type": "script",
+      "bytes": 19129
+    },
+    {
       "path": "/game/ui/apexCharacterSelectUi.js",
       "type": "script",
       "bytes": 22416
@@ -3025,17 +3030,17 @@
     {
       "path": "/game/ui/apexPickRuntime.js",
       "type": "script",
-      "bytes": 37814
+      "bytes": 37831
     },
     {
       "path": "/manualLab.js",
       "type": "script",
-      "bytes": 211242
+      "bytes": 218559
     },
     {
       "path": "/manualLabOnline.js",
       "type": "script",
-      "bytes": 16031
+      "bytes": 20913
     },
     {
       "path": "/sniper_cloak_move_sprite.webp",

@@ -604,6 +604,10 @@ export default function App() {
         <button type="button" disabled={!gameReady} onClick={() => runApex('restartAutoBattle')} aria-label="Restart">R</button>
         <button type="button" disabled={!gameReady} onClick={() => runApex('exitAutoBattle')} aria-label="Exit">X</button>
       </div>
+      <aside id="multiplayer-debug-overlay" className="multiplayer-debug-overlay hidden" aria-live="polite">
+        <b>REALTIME AUTHORITY</b>
+        <pre id="multiplayer-debug-content">NETWORK IDLE</pre>
+      </aside>
 
       <div id="manual-room-dialog" className="manual-room-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="manual-room-dialog-title">
         <div className="manual-room-dialog-panel">

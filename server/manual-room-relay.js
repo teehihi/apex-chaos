@@ -85,6 +85,22 @@ export function createManualRoomRelay() {
   const roomRecord = code => rooms.get(code);
   const roomPeers = room => room?.peers || room;
   const roomMode = room => room?.mode || DEFAULT_ROOM_MODE;
+  // Room creator, player slot, and authority owner are deliberately separate.
+  // Today the peer-hosted authority runs on the creator's client; a dedicated
+  // server can replace authorityOwnerId later without changing P1/P2 semantics.
+  const sessionIdentity = (client, room) => {
+    const set = roomPeers(room);
+    const remote = set ? [...set].find(peer => peer !== client) : null;
+    return {
+      localPlayerId:client?.playerId || null,
+      localPlayerSlot:client?.playerSlot || null,
+      remotePlayerId:remote?.playerId || null,
+      remotePlayerSlot:remote?.playerSlot || null,
+      roomCreatorId:room?.roomCreatorId || null,
+      authorityOwnerId:room?.authorityOwnerId || null,
+      roomRole:client?.roomRole || null
+    };
+  };
   const peers = client => {
     const room = client.room && roomRecord(client.room);
     const set = roomPeers(room);
@@ -96,6 +112,10 @@ export function createManualRoomRelay() {
   const leave = (client) => {
     if (!client.room || !rooms.has(client.room)) return;
     const room = roomRecord(client.room);
+    if (room?.authorityOwnerId === client.playerId || room?.started) {
+      destroyRoom(client);
+      return;
+    }
     const set = roomPeers(room);
     set.delete(client);
     relay(client, { type:'peer-left', room:client.room, mode:roomMode(room) });
@@ -126,9 +146,13 @@ export function createManualRoomRelay() {
     set.add(client);
     client.room = code;
     client.role = role;
+    client.roomRole = role === 'host' ? 'creator' : 'participant';
+    client.playerSlot = role === 'host' ? 'P1' : 'P2';
     client.mode = mode;
-    send(client, { type:'joined', room:code, role, mode, peers:set.size });
-    relay(client, { type:'peer-joined', room:code, mode, peers:set.size });
+    send(client, { type:'joined', room:code, role, mode, peers:set.size, ...sessionIdentity(client,room) });
+    for (const peer of set) {
+      if (peer !== client) send(peer, {type:'peer-joined',room:code,mode,peers:set.size,...sessionIdentity(peer,room)});
+    }
     return null;
   };
 
@@ -149,7 +173,8 @@ export function createManualRoomRelay() {
       '',
     ].join('\r\n'));
 
-    const client = { id:nextClientId++, socket, room:null, role:null };
+    const numericId = nextClientId++;
+    const client = { id:numericId, playerId:`peer-${numericId}`, socket, room:null, role:null, roomRole:null, playerSlot:null };
     let pending = Buffer.alloc(0);
     socket.on('data', (chunk) => {
       pending = Buffer.concat([pending, chunk]);
@@ -159,9 +184,9 @@ export function createManualRoomRelay() {
           if (message.type === 'create') {
             const mode = String(message.mode || DEFAULT_ROOM_MODE).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '') || DEFAULT_ROOM_MODE;
             const code = makeRoomCode();
-            rooms.set(code, { mode, peers:new Set() });
+            rooms.set(code, { mode, peers:new Set(), roomCreatorId:client.playerId, authorityOwnerId:client.playerId });
             joinRoom(client, code, 'host', mode);
-            send(client, { type:'created', room:code, role:'host', mode });
+            send(client, { type:'created', room:code, role:'host', mode, ...sessionIdentity(client,rooms.get(code)) });
           } else if (message.type === 'join') {
             const code = String(message.room || '').trim().toUpperCase();
             const mode = String(message.mode || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '') || null;
@@ -171,10 +196,21 @@ export function createManualRoomRelay() {
             const set = roomPeers(room);
             const peerCount = set ? set.size : 0;
             send(client, { type:'pong', t:message.t, room:client.room, mode:client.mode || roomMode(room), peers:peerCount });
-          } else if (['room-start', 'fighter-select', 'fighter-lock', 'input', 'snapshot', 'chat', 'leave', 'destroy-room'].includes(message.type)) {
+          } else if (['room-start', 'fighter-select', 'fighter-lock', 'input', 'input-v2', 'player-state', 'snapshot', 'snapshot-v2', 'chat', 'leave', 'destroy-room'].includes(message.type)) {
             if (message.type === 'leave') leave(client);
             else if (message.type === 'destroy-room') destroyRoom(client);
-            else relay(client, { ...message, from:client.role, room:client.room, mode:client.mode || message.mode || DEFAULT_ROOM_MODE });
+            else {
+              const room = client.room && roomRecord(client.room);
+              if ((message.type === 'snapshot' || message.type === 'snapshot-v2' || message.type === 'room-start') && room?.authorityOwnerId !== client.playerId) {
+                send(client,{type:'error',reason:'STATE AUTHORITY REQUIRED'});
+              } else {
+                if (message.type === 'room-start' && room) room.started = true;
+                const safeMessage = message.type === 'input-v2'
+                  ? {...message,packet:{...(message.packet||{}),playerId:client.playerId,playerSlot:client.playerSlot}}
+                  : message;
+                relay(client, { ...safeMessage, from:client.role, fromPlayerId:client.playerId, fromPlayerSlot:client.playerSlot, room:client.room, mode:client.mode || message.mode || DEFAULT_ROOM_MODE });
+              }
+            }
           }
         });
         pending = decoded.rest;

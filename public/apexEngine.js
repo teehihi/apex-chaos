@@ -2654,7 +2654,7 @@ function selectFighter(ft, card) {
 window.apexApplyOnlineFighterSelection = function(role, fighterName) {
     const ft = fighterTypeByName(String(fighterName || ''));
     if (!ft) return false;
-    const player = role === 'guest' ? 2 : 1;
+    const player = role === 'guest' || role === 'P2' ? 2 : 1;
     const selectedClass = player === 2 ? 'selected-p2' : 'selected-p1';
     document.querySelectorAll(`#roster-grid .fighter-card.${selectedClass}`).forEach(node => node.classList.remove(selectedClass));
     if (player === 2) p2Selection = ft;

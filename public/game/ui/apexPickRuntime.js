@@ -852,7 +852,7 @@
     const champ = currentRoster().find(item => item.name === fighterName);
     const ft = champ && fighterForChampion(champ);
     if (!champ || !ft) return false;
-    if (role === 'guest') {
+    if (role === 'guest' || role === 'P2') {
       PickRuntimeController.p2ChampionId = champ.id;
       p2Selection = ft;
     } else {

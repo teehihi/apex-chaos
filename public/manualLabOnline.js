@@ -7,6 +7,7 @@
   const ROOM_ROUTE = '/__manual-lab-room';
   const INPUT_SEND_MS = 33;
   const SNAPSHOT_SEND_MS = 50;
+  const PLAYER_STATE_SEND_MS = 40;
   const state = window.APEX_MANUAL_LAB_ONLINE = {
     socket:null,
     room:null,
@@ -15,13 +16,18 @@
     peers:0,
     lastError:null,
     lastSnapshotAt:0,
+    lastPlayerStateAt:0,
     lastPongAt:0,
     heartbeatTimer:0,
-    selectedFighters:{host:null,guest:null},
-    lockedFighters:{host:null,guest:null},
+    selectedFighters:{P1:null,P2:null},
+    lockedFighters:{P1:null,P2:null},
     championLocked:false,
     matchStarting:false
   };
+  Object.assign(state,{
+    roomCreatorId:null,authorityOwnerId:null,localPlayerId:null,remotePlayerId:null,
+    localPlayerSlot:null,remotePlayerSlot:null,isAuthorityRuntime:false,networkSync:null
+  });
 
   const $ = id => document.getElementById(id);
   const lab = () => window.APEX_MANUAL_LAB;
@@ -62,7 +68,7 @@
     setCode(state.room);
     setRole(state.role);
     const start = $('manual-room-start');
-    if (start) start.disabled = state.role !== 'host' || state.peers < 2;
+    if (start) start.disabled = !state.isAuthorityRuntime || state.peers < 2;
     const select = $('manual-room-select');
     if (select) select.disabled = !state.room || !state.role;
     const leave = $('manual-room-leave');
@@ -73,6 +79,62 @@
     state.socket.send(JSON.stringify(payload));
     return true;
   }
+  function applySessionIdentity(message={}) {
+    for (const key of ['roomCreatorId','authorityOwnerId','localPlayerId','remotePlayerId','localPlayerSlot','remotePlayerSlot','roomRole']) {
+      if (message[key] !== undefined) state[key]=message[key];
+    }
+    state.isAuthorityRuntime=!!state.localPlayerId&&state.localPlayerId===state.authorityOwnerId;
+  }
+  function slotIndex(slot){return slot==='P2'?1:0;}
+  function playerIdForSlot(slot){
+    if(state.localPlayerSlot===slot)return state.localPlayerId;
+    if(state.remotePlayerSlot===slot)return state.remotePlayerId;
+    return null;
+  }
+  function createNetworkAdapter(){
+    return {
+      getLocalPlayerState(){const value=lab()?.getLocalFighterState?.();return value?{...value,position:value.position||{x:value.x,y:value.y},facingDirection:value.facingDirection||value.dir}:null;},
+      getRemotePlayerState(){return lab()?.getPlayerNetworkState?.(slotIndex(state.remotePlayerSlot));},
+      setLocalPlayerTransform(value,mode){return lab()?.setLocalPlayerTransform?.(value,mode);},
+      offsetLocalPlayer(delta,mode){return lab()?.offsetLocalPlayer?.(delta,mode);},
+      setRemotePlayerTransform(value,mode){return lab()?.setRemotePlayerTransform?.(value,mode);},
+      applyAuthorityInput(packet){
+        if(packet?.playerId===state.localPlayerId)return;
+        lab()?.applyRemoteInput?.({seq:packet.sequence,held:packet.held,pressed:packet.pressed,aimPoint:packet.aimPoint,pointerInside:packet.pointerInside,moveVector:{x:packet.moveX,y:packet.moveY}});
+      },
+      validateAuthorityState(){/* Existing APEX CONTROL collision/combat loop remains the authority simulation adapter. */},
+      captureAuthoritySnapshot(){
+        const raw=lab()?.getMatchSnapshot?.()||{};
+        const players=['P1','P2'].map(slot=>{
+          const value=lab()?.getPlayerNetworkState?.(slotIndex(slot));
+          return value?{...value,playerId:playerIdForSlot(slot),playerSlot:slot}:null;
+        }).filter(Boolean);
+        return {raw,players,roundState:raw.match?.state||null,timer:raw.match?.timeLeft??raw.t??null,winner:raw.match?.winner||null,importantEvents:[]};
+      },
+      applyAuthorityMatchState(snapshot){
+        lab()?.applyMatchSnapshot?.(snapshot.raw||snapshot,{protectLocal:true,applyTransforms:false});
+        lab()?.applyAuthorityPlayerStates?.(snapshot.players||[]);
+      }
+    };
+  }
+  function startNetworkRuntime(){
+    const Runtime=window.APEX_REALTIME_MULTIPLAYER?.NetworkTransformSync;
+    if(!Runtime||!state.localPlayerId||!state.authorityOwnerId)return false;
+    state.networkSync?.stop?.();
+    state.networkSync=new Runtime(createNetworkAdapter(),{
+      sendInput:packet=>send({type:'input-v2',packet}),
+      sendSnapshot:snapshot=>send({type:'snapshot-v2',snapshot})
+    });
+    state.networkSync.configureSession({
+      localPlayerId:state.localPlayerId,remotePlayerId:state.remotePlayerId,
+      localPlayerSlot:state.localPlayerSlot,remotePlayerSlot:state.remotePlayerSlot,
+      roomCreatorId:state.roomCreatorId,authorityOwnerId:state.authorityOwnerId,
+      isAuthorityRuntime:state.isAuthorityRuntime
+    });
+    state.networkSync.start();
+    return true;
+  }
+  function stopNetworkRuntime(){state.networkSync?.stop?.();state.networkSync=null;}
   function startHeartbeat() {
     clearInterval(state.heartbeatTimer);
     state.heartbeatTimer = setInterval(() => {
@@ -119,26 +181,31 @@
       try { msg = JSON.parse(event.data); } catch { return; }
       if (msg.type === 'pong') {
         state.lastPongAt = performance.now();
+        state.networkSync?.setPing?.(performance.now()-Number(msg.t||performance.now()));
       } else if (msg.type === 'created') {
+        applySessionIdentity(msg);
         state.room = msg.room;
         state.role = 'host';
         state.peers = 1;
-        state.lockedFighters = {host:null,guest:null};
-        state.selectedFighters = {host:null,guest:null};
+        state.lockedFighters = {P1:null,P2:null};
+        state.selectedFighters = {P1:null,P2:null};
         state.championLocked = false;
         state.matchStarting = false;
+        stopNetworkRuntime();
         status(`CONTROL ONLINE ${msg.room} CREATED · SEND CODE TO PLAYER 2`, 'ok');
       } else if (msg.type === 'joined') {
+        applySessionIdentity(msg);
         state.room = msg.room;
         state.role = msg.role;
         state.peers = msg.peers || 1;
-        state.lockedFighters = {host:null,guest:null};
-        state.selectedFighters = {host:null,guest:null};
+        state.lockedFighters = {P1:null,P2:null};
+        state.selectedFighters = {P1:null,P2:null};
         state.championLocked = false;
         state.matchStarting = false;
         status(msg.role === 'guest' ? `JOINED CONTROL ${msg.room} · WAIT HOST START` : `CONTROL ROOM ${msg.room} READY`, 'ok');
         if (state.peers >= 2) window.openManualOnlineChampionSelect?.();
       } else if (msg.type === 'peer-joined') {
+        applySessionIdentity(msg);
         state.peers = msg.peers || 2;
         status('PLAYER 2 CONNECTED · SELECTING CHAMPIONS', 'ok');
         window.openManualOnlineChampionSelect?.();
@@ -147,30 +214,32 @@
         lab()?.applyRemoteInput?.({held:[],pressed:[],moveVector:{x:0,y:0},pointerInside:false});
         status('OTHER PLAYER LEFT');
       } else if (msg.type === 'room-start') {
-        const slot = state.role === 'guest' ? 1 : 0;
+        const slot = slotIndex(state.localPlayerSlot);
         prepareOnlineMatchAudio();
         lab()?.startNetworkMatch?.(msg.p1, msg.p2, slot, state.room);
+        startNetworkRuntime();
         status(`CONTROL ONLINE STARTED · YOU ARE P${slot + 1}`, 'ok');
       } else if (msg.type === 'fighter-select') {
-        const role = msg.from === 'guest' ? 'guest' : 'host';
-        state.selectedFighters ||= {host:null,guest:null};
-        state.selectedFighters[role] = msg.fighter || null;
-        window.apexApplyOnlineFighterSelection?.(role, msg.fighter);
+        const playerSlot = msg.fromPlayerSlot || (msg.from === 'guest' ? 'P2' : 'P1');
+        state.selectedFighters ||= {P1:null,P2:null};
+        state.selectedFighters[playerSlot] = msg.fighter || null;
+        window.apexApplyOnlineFighterSelection?.(playerSlot, msg.fighter);
       } else if (msg.type === 'fighter-lock') {
-        const role = msg.from === 'guest' ? 'guest' : 'host';
-        state.lockedFighters[role] = msg.fighter || null;
-        window.apexApplyOnlineFighterSelection?.(role, msg.fighter);
+        const playerSlot = msg.fromPlayerSlot || (msg.from === 'guest' ? 'P2' : 'P1');
+        state.lockedFighters[playerSlot] = msg.fighter || null;
+        window.apexApplyOnlineFighterSelection?.(playerSlot, msg.fighter);
         maybeStartLockedMatch();
       } else if (msg.type === 'room-destroyed') {
         const localClosed = msg.by === state.role;
         const destroyedBy = localClosed ? 'YOU CLOSED THE ROOM' : 'OTHER PLAYER CLOSED THE ROOM';
         status(destroyedBy, 'error');
+        stopNetworkRuntime();
         state.room = null;
         state.role = null;
         state.connected = false;
         state.peers = 0;
-        state.lockedFighters = {host:null,guest:null};
-        state.selectedFighters = {host:null,guest:null};
+        state.lockedFighters = {P1:null,P2:null};
+        state.selectedFighters = {P1:null,P2:null};
         state.championLocked = false;
         state.matchStarting = false;
         document.body.classList.remove('manual-online-select');
@@ -185,8 +254,14 @@
         );
       } else if (msg.type === 'input') {
         lab()?.applyRemoteInput?.(msg.input);
+      } else if (msg.type === 'input-v2') {
+        state.networkSync?.receiveInput?.(msg.packet);
+      } else if (msg.type === 'player-state') {
+        if (state.isAuthorityRuntime && msg.fromPlayerId !== state.localPlayerId) lab()?.applyRemoteFighterState?.(msg.state);
       } else if (msg.type === 'snapshot') {
-        if (state.role === 'guest') lab()?.applyMatchSnapshot?.(msg.snapshot, {protectLocal:true});
+        if (!state.isAuthorityRuntime) lab()?.applyMatchSnapshot?.(msg.snapshot, {protectLocal:true});
+      } else if (msg.type === 'snapshot-v2') {
+        state.networkSync?.receiveSnapshot?.(msg.snapshot);
       } else if (msg.type === 'error') {
         state.lastError = msg.reason || 'ROOM ERROR';
         status(state.lastError, 'error');
@@ -216,10 +291,11 @@
     state.role = null;
     state.connected = false;
     state.peers = 0;
-    state.lockedFighters = {host:null,guest:null};
-    state.selectedFighters = {host:null,guest:null};
+    state.lockedFighters = {P1:null,P2:null};
+    state.selectedFighters = {P1:null,P2:null};
     state.championLocked = false;
     state.matchStarting = false;
+    stopNetworkRuntime();
     document.body.classList.remove('manual-online-select');
     updatePanel();
     status('ROOM CLOSED');
@@ -229,7 +305,7 @@
     try { window.apexStopBattleAudio?.(); } catch {}
   }
   function startRoomMatch() {
-    if (state.role !== 'host') { status('GUEST WAITS FOR HOST START', 'error'); return false; }
+    if (!state.isAuthorityRuntime) { status('WAITING FOR AUTHORITY RUNTIME', 'error'); return false; }
     const p1Selected = selectedFighter(1);
     const p2Selected = selectedFighter(2);
     if (!p1Selected || !p2Selected) { status('HOST MUST SELECT BOTH CHAMPIONS', 'error'); return false; }
@@ -238,29 +314,32 @@
     if (!p1 || !p2) { status('INVALID CHAMPION SELECTION', 'error'); return false; }
     send({type:'room-start', p1, p2});
     prepareOnlineMatchAudio();
-    lab()?.startNetworkMatch?.(p1, p2, 0, state.room);
-    status('CONTROL ONLINE STARTED · YOU ARE P1', 'ok');
+    const localSlot=slotIndex(state.localPlayerSlot);
+    lab()?.startNetworkMatch?.(p1, p2, localSlot, state.room);
+    startNetworkRuntime();
+    status(`CONTROL ONLINE STARTED · YOU ARE ${state.localPlayerSlot}`, 'ok');
     return true;
   }
 
   function maybeStartLockedMatch() {
-    const hostFighter = state.lockedFighters.host;
-    const guestFighter = state.lockedFighters.guest;
-    if (state.role !== 'host' || state.matchStarting || !hostFighter || !guestFighter) return false;
+    const p1Fighter = state.lockedFighters.P1;
+    const p2Fighter = state.lockedFighters.P2;
+    if (!state.isAuthorityRuntime || state.matchStarting || !p1Fighter || !p2Fighter) return false;
     state.matchStarting = true;
-    send({type:'room-start', p1:hostFighter, p2:guestFighter});
+    send({type:'room-start', p1:p1Fighter, p2:p2Fighter});
     prepareOnlineMatchAudio();
-    lab()?.startNetworkMatch?.(hostFighter, guestFighter, 0, state.room);
+    lab()?.startNetworkMatch?.(p1Fighter, p2Fighter, slotIndex(state.localPlayerSlot), state.room);
+    startNetworkRuntime();
     return true;
   }
 
   function lockChampion() {
     if (!state.room || !state.role || state.peers < 2 || state.championLocked) return false;
-    const slot = state.role === 'guest' ? 2 : 1;
+    const slot = state.localPlayerSlot === 'P2' ? 2 : 1;
     const fighter = fighterName(selectedFighter(slot));
     if (!fighter) { status('SELECT A CHAMPION FIRST', 'error'); return false; }
     state.championLocked = true;
-    state.lockedFighters[state.role] = fighter;
+    state.lockedFighters[state.localPlayerSlot] = fighter;
     send({type:'fighter-lock', fighter});
     const title = document.getElementById('select-title');
     if (title) title.textContent = `${fighter} READY · WAITING FOR RIVAL`;
@@ -277,8 +356,8 @@
   window.lockManualRoomChampion = lockChampion;
   state.selectChampion = function selectChampion(fighter) {
     if (!state.room || !state.role || state.peers < 2 || state.championLocked) return false;
-    state.selectedFighters ||= {host:null,guest:null};
-    state.selectedFighters[state.role] = fighter;
+    state.selectedFighters ||= {P1:null,P2:null};
+    state.selectedFighters[state.localPlayerSlot] = fighter;
     send({type:'fighter-select', fighter});
     return true;
   };
@@ -289,6 +368,7 @@
     window.setTimeout(() => {
       if (!state.room) return;
       const socket = state.socket;
+      stopNetworkRuntime();
       state.room = null;
       state.role = null;
       updatePanel();
@@ -360,7 +440,7 @@
   window.startMatch = function manualOnlineStartMatch() {
     if (state.room && state.role) {
       if (startRoomMatch()) return true;
-      if (state.role === 'guest') return false;
+      if (!state.isAuthorityRuntime) return false;
     }
     return previousStartMatch?.apply(this, arguments);
   };
@@ -379,6 +459,11 @@
   let lastInputHash = '';
   window.addEventListener('apex-manual-lab-input-frame', event => {
     if (!state.room || !state.connected) return;
+    if (state.networkSync) {
+      state.networkSync.captureLocalInput(event.detail);
+      state.networkSync.renderFrame(performance.now());
+      return;
+    }
     const now = performance.now();
     const inputHash = JSON.stringify(event.detail || {});
     if (inputHash !== lastInputHash || now - lastInputSent >= INPUT_SEND_MS) {
@@ -386,7 +471,12 @@
       lastInputHash = inputHash;
       send({type:'input', input:event.detail});
     }
-    if (state.role === 'host' && now - state.lastSnapshotAt >= SNAPSHOT_SEND_MS) {
+    if (!state.isAuthorityRuntime && now - state.lastPlayerStateAt >= PLAYER_STATE_SEND_MS) {
+      state.lastPlayerStateAt = now;
+      const playerState = lab()?.getLocalFighterState?.();
+      if (playerState) send({type:'player-state', state:playerState});
+    }
+    if (state.isAuthorityRuntime && now - state.lastSnapshotAt >= SNAPSHOT_SEND_MS) {
       state.lastSnapshotAt = now;
       const snapshot = lab()?.getMatchSnapshot?.();
       if (snapshot) send({type:'snapshot', snapshot});

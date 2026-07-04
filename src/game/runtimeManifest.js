@@ -47,6 +47,7 @@ export const MODE_DEFERRED_RUNTIMES = {
   manualLab: [
   ['/game/modes/apexControlChampionSkills.js', 'apexControlChampionSkills'],
   ['/manualLab.js', 'apexManualLab'],
+  ['/game/network/apexRealtimeMultiplayer.js', 'apexRealtimeMultiplayer'],
   ['/manualLabOnline.js', 'apexManualLabOnline', { optional: true }],
   ],
   solo: [

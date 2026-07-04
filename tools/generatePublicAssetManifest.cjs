@@ -86,6 +86,7 @@ const files = [
   path.join(publicDir, 'game/fighters/fangRuntime.js'),
   path.join(publicDir, 'game/ui/apexCharacterSelectUi.js'),
   path.join(publicDir, 'game/ui/apexPickRuntime.js'),
+  path.join(publicDir, 'game/network/apexRealtimeMultiplayer.js'),
   path.join(publicDir, 'game/core/apexPoseLockRuntime.js'),
   path.join(publicDir, 'manualLab.js'),
   path.join(publicDir, 'manualLabOnline.js'),

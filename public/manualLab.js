@@ -3131,7 +3131,7 @@
     const bot = STATE.bot;
     const p2 = fighters?.[1] || null;
     const p1 = fighters?.[0] || null;
-    if (!STATE.active || !bot?.enabled || !p2 || p2.hp <= 0) return;
+    if (!STATE.active || STATE.room || !bot?.enabled || !p2 || p2.hp <= 0) return;
     remoteInput.held.clear();
     remoteInput.pressed.clear();
     remoteInput.pointerInside = true;
@@ -3284,6 +3284,13 @@
     }
   }
   function manualMoveVectorFor(f, manual) {
+    // In an online match both local and remote controllers must read their live
+    // input source. The champion cache can be one render frame behind (or remain
+    // {0,0}), which makes authority simulate P2 at the old position and then
+    // reconcile the guest backwards when WASD is released.
+    if (STATE.room) {
+      return normalizeManualVector(manual.getMoveVector?.());
+    }
     const remembered = f?.data?.apexControlManualMove;
     return normalizeManualVector(remembered || manual?.getMoveVector?.());
   }
@@ -3440,6 +3447,7 @@
     applyControlWorld();
     STATE.active = true;
     STATE.selecting = false;
+    STATE.room = opts.networkRoom || null;
     STATE.localSlot = opts.localSlot === 1 ? 1 : 0;
     STATE.remoteSlot = opts.remoteSlot === 0 || opts.remoteSlot === 1 ? opts.remoteSlot : (STATE.localSlot === 0 ? 1 : 0);
     STATE.specialAssignments = rollSpecialAssignments();
@@ -3448,6 +3456,9 @@
     STATE.captureContest = false;
     STATE.lastKillBonus = null;
     STATE.bot = makeBotControllerState();
+    // Online P2 is controlled by the guest's input packets. The offline bot
+    // must never overwrite remoteInput on the authority runtime.
+    STATE.bot.enabled = !opts.networkRoom;
     STATE.effects = createEffectState();
     STATE.bosses = createBossState();
     STATE.lockedCaptureZones = new Set();
@@ -4367,6 +4378,9 @@
       localSlot:STATE.localSlot,
       match:STATE.match ? {
         state:STATE.match.state,
+        winner:STATE.match.winner,
+        endReason:STATE.match.endReason,
+        message:STATE.match.message,
         elapsed:STATE.match.elapsed,
         timeLeft:STATE.match.timeLeft,
         p1Score:STATE.match.p1Score,
@@ -4386,6 +4400,114 @@
       }) : null)
     };
   }
+  function getLocalFighterState() {
+    const f = fighters?.[STATE.localSlot];
+    if (!STATE.active || !f) return null;
+    const sampleNow = performance.now();
+    const previous = f.data?.apexNetworkSample;
+    const elapsed = previous ? Math.max(1, sampleNow - previous.t) / 1000 : 0;
+    const velocity = elapsed > 0 ? {x:(f.x-previous.x)/elapsed,y:(f.y-previous.y)/elapsed} : {x:0,y:0};
+    f.data ||= {};
+    f.data.apexNetworkSample = {x:f.x,y:f.y,t:sampleNow};
+    return {
+      seq:(STATE.localTransformSeq = (STATE.localTransformSeq || 0) + 1),
+      slot:STATE.localSlot,
+      x:f.x,
+      y:f.y,
+      position:{x:f.x,y:f.y},
+      velocity,
+      dir:f.dir && Number.isFinite(f.dir.x) && Number.isFinite(f.dir.y) ? {x:f.dir.x,y:f.dir.y} : null,
+      facingDirection:f.dir && Number.isFinite(f.dir.x) && Number.isFinite(f.dir.y) ? {x:f.dir.x,y:f.dir.y} : {x:1,y:0}
+    };
+  }
+  function getPlayerNetworkState(slot) {
+    const f = fighters?.[slot];
+    if (!STATE.active || !f) return null;
+    const sampleNow=performance.now();
+    f.data ||= {};
+    const previous=f.data.apexSnapshotSample;
+    const elapsed=previous?Math.max(1,sampleNow-previous.t)/1000:0;
+    let velocity=elapsed>0?{x:(f.x-previous.x)/elapsed,y:(f.y-previous.y)/elapsed}:{x:0,y:0};
+    // Sub-pixel corrections are network noise, not actual movement. Publishing
+    // them as velocity makes an idle remote fighter extrapolate and rotate forever.
+    if(Math.hypot(velocity.x,velocity.y)<8)velocity={x:0,y:0};
+    f.data.apexSnapshotSample={x:f.x,y:f.y,t:sampleNow};
+    const cooldowns={};
+    for(const [key,value] of Object.entries(f.data||{})){
+      if(/cooldown|timer/i.test(key)&&Number.isFinite(value))cooldowns[key]=value;
+    }
+    const actionValue=f.data?.action;
+    const skillValue=f.data?.skillState;
+    return {
+      playerSlot:slot===1?'P2':'P1',position:{x:f.x,y:f.y},velocity,
+      facingDirection:f.dir&&Number.isFinite(f.dir.x)?{x:f.dir.x,y:f.dir.y}:{x:1,y:0},
+      hp:f.hp,maxHp:f.maxHp,currentAction:typeof actionValue==='string'?actionValue:(actionValue?.type||actionValue?.name||null),
+      animationState:typeof f.data?.animationState==='string'?f.data.animationState:null,
+      skillState:['string','number','boolean'].includes(typeof skillValue)?skillValue:(skillValue?.type||skillValue?.name||null),
+      cooldowns,alive:f.hp>0,dead:f.hp<=0,correctionMode:'none'
+    };
+  }
+  function setLocalPlayerTransform(networkState, mode='smooth') {
+    const f=fighters?.[STATE.localSlot], position=networkState?.position;
+    if(!f||!position||!Number.isFinite(position.x)||!Number.isFinite(position.y))return false;
+    f.x=clampWorldX(position.x,f.radius);f.y=clampWorldY(position.y,f.radius);
+    if(networkState.facingDirection)f.setDir(networkState.facingDirection.x,networkState.facingDirection.y);
+    STATE.networkCorrectionMode=mode;return true;
+  }
+  function offsetLocalPlayer(delta, mode='smooth') {
+    const f=fighters?.[STATE.localSlot];if(!f||!Number.isFinite(delta?.x)||!Number.isFinite(delta?.y))return false;
+    f.x=clampWorldX(f.x+delta.x,f.radius);f.y=clampWorldY(f.y+delta.y,f.radius);STATE.networkCorrectionMode=mode;return true;
+  }
+  function setRemotePlayerTransform(networkState, mode='interpolate') {
+    const f=fighters?.[STATE.remoteSlot], position=networkState?.position;
+    if(!f||!position||!Number.isFinite(position.x)||!Number.isFinite(position.y))return false;
+    const targetX=clampWorldX(position.x,f.radius),targetY=clampWorldY(position.y,f.radius);
+    const idle=Math.hypot(networkState?.velocity?.x||0,networkState?.velocity?.y||0)<8;
+    // Ignore microscopic idle corrections. They otherwise feed back into the
+    // next authority velocity sample and show up as visible vibration.
+    if(mode==='snap'||!idle||Math.hypot(targetX-f.x,targetY-f.y)>=0.5){f.x=targetX;f.y=targetY;}
+    const facing=networkState.facingDirection;
+    if(facing&&Math.hypot(facing.x||0,facing.y||0)>0.5){
+      const current=f.dir||{x:1,y:0};
+      if(!idle||Math.hypot(facing.x-current.x,facing.y-current.y)>=0.02)f.setDir(facing.x,facing.y);
+    }
+    STATE.remoteNetworkCorrectionMode=mode;return true;
+  }
+  function applyAuthorityPlayerStates(playerStates=[]) {
+    if(!STATE.active||!Array.isArray(playerStates))return false;
+    for(const source of playerStates){
+      const slot=source?.playerSlot==='P2'?1:0,f=fighters?.[slot];if(!f)continue;
+      if(Number.isFinite(source.maxHp))f.maxHp=source.maxHp;
+      if(Number.isFinite(source.hp))f.hp=clamp(source.hp,0,f.maxHp||source.maxHp||1000);
+      f.data ||= {};
+      f.data.apexAuthorityAction=source.currentAction||null;
+      f.data.apexAuthorityAnimation=source.animationState||null;
+      f.data.apexAuthoritySkillState=source.skillState||null;
+      for(const [key,value] of Object.entries(source.cooldowns||{}))if(Number.isFinite(value))f.data[key]=value;
+    }
+    updateHUD();
+    return true;
+  }
+  function applyRemoteFighterState(remoteState) {
+    if (!STATE.active || !remoteState || remoteState.slot !== STATE.remoteSlot) return false;
+    const seq = Number(remoteState.seq || 0);
+    if (seq && seq <= (STATE.lastRemoteTransformSeq || 0)) return false;
+    if (seq) STATE.lastRemoteTransformSeq = seq;
+    const f = fighters?.[STATE.remoteSlot];
+    if (!f || !Number.isFinite(remoteState.x) || !Number.isFinite(remoteState.y)) return false;
+    const targetX = clampWorldX(remoteState.x, f.radius);
+    const targetY = clampWorldY(remoteState.y, f.radius);
+    const dx = targetX - f.x;
+    const dy = targetY - f.y;
+    const distance = Math.hypot(dx, dy);
+    const correction = distance > 140 ? 1 : distance > 28 ? .72 : .42;
+    f.x += dx * correction;
+    f.y += dy * correction;
+    if (remoteState.dir && Number.isFinite(remoteState.dir.x) && Number.isFinite(remoteState.dir.y)) {
+      f.setDir(remoteState.dir.x, remoteState.dir.y);
+    }
+    return true;
+  }
   function applyMatchSnapshot(snapshot, options={}) {
     if (!snapshot?.fighters || !fighters?.length) return false;
     const protectLocal = options.protectLocal !== false;
@@ -4393,16 +4515,24 @@
       const f = fighters[index];
       if (!src || !f) return;
       const isLocal = protectLocal && index === STATE.localSlot;
-      if (!isLocal) {
-        if (Number.isFinite(src.x)) f.x = clampWorldX(src.x, f.radius);
-        if (Number.isFinite(src.y)) f.y = clampWorldY(src.y, f.radius);
+      if (!isLocal && options.applyTransforms !== false) {
+        if (Number.isFinite(src.x) && Number.isFinite(src.y)) {
+          const targetX = clampWorldX(src.x, f.radius);
+          const targetY = clampWorldY(src.y, f.radius);
+          const dx = targetX - f.x;
+          const dy = targetY - f.y;
+          const distance = Math.hypot(dx, dy);
+          const correction = options.smoothRemote === false || distance > 140 ? 1 : distance > 24 ? .7 : .45;
+          f.x += dx * correction;
+          f.y += dy * correction;
+        }
         if (src.dir && Number.isFinite(src.dir.x) && Number.isFinite(src.dir.y)) f.setDir(src.dir.x, src.dir.y);
       }
       if (Number.isFinite(src.hp)) f.hp = clamp(src.hp, 0, f.maxHp || src.maxHp || 1000);
       if (Number.isFinite(src.damageDone)) f.damageDone = src.damageDone;
     });
     if (snapshot.match && STATE.match) {
-      for (const key of ['state','elapsed','timeLeft','p1Score','p2Score']) {
+      for (const key of ['state','elapsed','timeLeft','p1Score','p2Score','winner','endReason','message']) {
         if (snapshot.match[key] !== undefined) STATE.match[key] = snapshot.match[key];
       }
     }
@@ -4431,6 +4561,8 @@
     STATE.room = room || STATE.room || null;
     STATE.localSlot = slot === 1 ? 1 : 0;
     STATE.remoteSlot = STATE.localSlot === 0 ? 1 : 0;
+    STATE.localTransformSeq = 0;
+    STATE.lastRemoteTransformSeq = 0;
     document.body.classList.remove('manual-online-select');
     document.getElementById('manual-room-screen')?.classList.add('hidden');
     startSpecificMatch(ft1, ft2, {countdown:false,tournament:false,trial:false,manualLab:true,localSlot:STATE.localSlot,remoteSlot:STATE.remoteSlot,networkRoom:STATE.room});
@@ -4550,6 +4682,13 @@
     getInputSnapshot,
     getMatchSnapshot,
     applyMatchSnapshot,
+    getLocalFighterState,
+    getPlayerNetworkState,
+    setLocalPlayerTransform,
+    offsetLocalPlayer,
+    setRemotePlayerTransform,
+    applyAuthorityPlayerStates,
+    applyRemoteFighterState,
     startNetworkMatch,
     releaseHeldInput
   });
